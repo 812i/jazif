@@ -1,352 +1,240 @@
 import streamlit as st
 import qrcode
-
 from io import BytesIO
 
-
 # =========================================================
-# PAGE CONFIG
+# JAZIF COMMUNITY SPACE — MOBILE-FIRST DEMO
 # =========================================================
 
 st.set_page_config(
-    page_title="JAZIF Community Space",
+    page_title="JAZIF | Community Space",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
+# ------------------------- COLORS -------------------------
 
-# =========================================================
-# SESSION STATE
-# =========================================================
+DARK = "#263D32"
+GREEN = "#496653"
+SOFT_GREEN = "#E7EDE5"
+BG = "#F7F7F2"
+WHITE = "#FFFFFF"
+MUTED = "#66766A"
+BORDER = "#E2E8DF"
 
-if "page" not in st.session_state:
-    st.session_state.page = "الرئيسية"
+# ---------------------- SESSION STATE ---------------------
 
-if "community" not in st.session_state:
-    st.session_state.community = "اليوغا"
+defaults = {
+    "page": "الرئيسية",
+    "community": "اليوغا",
+    "ideas": [],
+    "votes": {},
+    "interests": [],
+    "messages": {},
+}
 
-if "ideas" not in st.session_state:
-    st.session_state.ideas = []
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
-if "votes" not in st.session_state:
-    st.session_state.votes = {}
-
-if "interests" not in st.session_state:
-    st.session_state.interests = []
-
-if "messages" not in st.session_state:
-    st.session_state.messages = {}
-
-
-# =========================================================
-# CUSTOM CSS
-# =========================================================
+# ----------------------------- CSS -------------------------
 
 st.markdown(
     """
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 
     :root {
         --dark: #263D32;
         --green: #496653;
         --soft: #E7EDE5;
-        --background: #F7F7F2;
+        --bg: #F7F7F2;
         --white: #FFFFFF;
         --muted: #66766A;
         --border: #E2E8DF;
     }
 
+    html, body, [class*="css"], button, input, textarea {
+        font-family: 'IBM Plex Sans Arabic', sans-serif !important;
+    }
+
     .stApp {
-        background-color: var(--background);
+        background: var(--bg) !important;
+        color: var(--dark) !important;
+    }
+
+    /* Hide Streamlit's default chrome, but keep the app usable */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+    }
+    #MainMenu, footer {
+        visibility: hidden;
+    }
+
+    /* Main page spacing: reserve room for the fixed site header */
+    .block-container {
+        max-width: 1100px;
+        padding: 158px 1.2rem 3rem !important;
+    }
+
+    .stApp p, .stApp li, .stApp label, .stMarkdown {
         color: var(--dark);
     }
 
-    .block-container {
-        padding-top: 158px;
-        padding-bottom: 2rem;
-        max-width: 1100px;
+    h1, h2, h3, h4 {
+        color: var(--dark) !important;
+        font-weight: 700 !important;
+        line-height: 1.5 !important;
     }
 
+    p { line-height: 1.8; }
+
+    /* FIXED HEADER: logo + navigation stay together */
     .st-key-site_header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 999999;
-        background: #F7F7F2;
-        padding: 15px 25px 10px;
-        border-bottom: 1px solid #E2E8DF;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 999999 !important;
+        box-sizing: border-box !important;
+        background: var(--bg) !important;
+        padding: 12px max(14px, calc((100vw - 1060px) / 2)) 10px !important;
+        border-bottom: 1px solid var(--border) !important;
+        box-shadow: 0 4px 14px rgba(38, 61, 50, 0.08) !important;
     }
 
     .brand {
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
+        align-items: center;
+        padding: 4px 0 9px;
     }
 
     .brand-name {
-        font-size: 28px;
-        font-weight: 800;
-        color: #263D32;
-        letter-spacing: 2px;
+        color: var(--dark);
+        font-size: 27px;
+        font-weight: 700;
+        letter-spacing: 1px;
     }
 
     .brand-sub {
-        display: block;
-        font-size: 11px;
-        color: #66766A;
-        letter-spacing: 2px;
+        color: var(--muted);
+        font-size: 12px;
+        margin-right: 6px;
     }
 
-    .brand-icon {
-        font-size: 25px;
+    .brand-icon { font-size: 25px; }
+
+    /* Navigation radio group */
+    .st-key-site_header div[data-testid="stRadio"] {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
     }
 
+    .st-key-site_header div[data-testid="stRadio"] > label {
+        display: none !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 7px !important;
+        width: 100% !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] label {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+        background: var(--white) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 12px !important;
+        padding: 8px 3px !important;
+        margin: 0 !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] label p,
+    .st-key-site_header div[data-testid="stRadio"] label span {
+        color: var(--dark) !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        opacity: 1 !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] label:has(input:checked) {
+        background: var(--dark) !important;
+        border-color: var(--dark) !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] label:has(input:checked) p,
+    .st-key-site_header div[data-testid="stRadio"] label:has(input:checked) span {
+        color: #FFFFFF !important;
+    }
+
+    .st-key-site_header div[data-testid="stRadio"] label > div:first-child,
+    .st-key-site_header div[data-testid="stRadio"] div[role="radio"] > div:first-child {
+        display: none !important;
+    }
+
+    /* Hero */
     .hero {
-        background: linear-gradient(135deg, #263D32, #496653);
-        padding: 35px;
+        background: var(--dark);
+        color: #FFFFFF;
+        padding: 30px 24px;
         border-radius: 22px;
-        color: white;
-        margin-bottom: 25px;
+        margin: 12px 0 28px;
     }
 
     .hero h1 {
-        color: white !important;
+        color: #FFFFFF !important;
         font-size: 30px;
+        margin-top: 14px;
     }
 
     .hero p {
-        color: #E7EDE5;
+        color: #E7EDE5 !important;
         font-size: 15px;
     }
 
     .hero-tag {
-        color: #E7EDE5;
-        font-size: 11px;
-        letter-spacing: 2px;
+        display: inline-block;
+        background: var(--soft);
+        color: var(--dark) !important;
+        padding: 7px 13px;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
     }
 
     .section-title {
         font-size: 23px;
-        font-weight: 750;
-        color: #263D32;
-        margin-top: 28px;
-        margin-bottom: 7px;
-    }
-
-    .section-subtitle {
-        color: #66766A;
-        font-size: 14px;
-        margin-bottom: 18px;
-    }
-
-    .card {
-        background: white;
-        border: 1px solid #E2E8DF;
-        border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 14px;
-    }
-
-    .card-title {
-        color: #263D32;
-        font-size: 18px;
         font-weight: 700;
-        margin-bottom: 7px;
+        color: var(--dark);
+        margin: 28px 0 8px;
     }
 
-    .muted {
-        color: #66766A;
-        font-size: 13px;
-    }
-
-    .tag {
-        display: inline-block;
-        background: #E7EDE5;
-        color: #263D32;
-        border-radius: 30px;
-        padding: 5px 11px;
-        font-size: 12px;
-        margin: 3px;
-    }
-
-    .stat-card {
-        background: white;
-        border: 1px solid #E2E8DF;
-        border-radius: 16px;
-        padding: 18px;
-        text-align: center;
-    }
-
-    .stat-number {
-        font-size: 26px;
-        color: #263D32;
-        font-weight: 700;
-    }
-
-    .stat-label {
-        color: #66766A;
-        font-size: 12px;
-    }
-
-    .idea-card {
-        background: white;
-        border: 1px solid #E2E8DF;
-        border-radius: 16px;
-        padding: 18px;
-        margin: 12px 0;
-    }
-
-    .idea-voting-banner {
-        background: #E7EDE5;
-        border: 1px solid #E2E8DF;
-        border-radius: 16px;
-        padding: 17px 18px;
-        margin: 14px 0 18px;
-        text-align: center;
-    }
-
-    .idea-voting-banner .banner-title {
-        color: #263D32;
-        font-size: 17px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .idea-voting-banner .banner-subtitle {
-        color: #66766A;
-        font-size: 13px;
-    }
-
-    .idea-vote-count {
-        color: #496653;
-        font-size: 13px;
-        font-weight: 600;
-        margin-top: 8px;
-    }
-
-    .community-cover {
-        background: linear-gradient(135deg, #263D32, #496653);
-        color: white;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 18px;
-    }
-
-    .community-cover h2 {
-        color: white !important;
-    }
-
-    .community-cover p {
-        color: #E7EDE5 !important;
-    }
-
-    .space-box {
-        background: white;
-        border: 1px solid #E2E8DF;
-        border-radius: 16px;
-        padding: 18px;
-        text-align: center;
-    }
-
-    .space-number {
-        font-size: 25px;
-        font-weight: 700;
-        color: #263D32;
-    }
-
-    .space-label {
-        font-size: 13px;
-        color: #66766A;
-    }
-
-    .ticket {
-        background: white;
-        border: 1px dashed #496653;
-        border-radius: 18px;
-        padding: 22px;
-        margin: 14px 0;
-    }
-
-    .stButton > button {
-        background: #263D32 !important;
-        color: white !important;
-        border: 1px solid #263D32 !important;
-        border-radius: 12px !important;
-        padding: 9px 17px !important;
-        font-weight: 600 !important;
-        min-height: 42px;
-        width: 100%;
-    }
-
-    .stButton > button:hover {
-        background: #496653 !important;
-        border-color: #496653 !important;
-    }
-
-    @media (max-width: 700px) {
-        .block-container {
-            padding: 145px 0.85rem 2rem !important;
-        }
-
-        .st-key-site_header {
-            padding: 9px 12px;
-        }
-
-        .brand-name {
-            font-size: 23px;
-        }
-
-        .brand-sub {
-            font-size: 10px;
-        }
-
-        .hero {
-            padding: 24px 18px;
-        }
-
-        .hero h1 {
-            font-size: 24px;
-        }
-
-        .section-title {
-            font-size: 20px;
-        }
-
-        .card {
-            padding: 16px;
-        }
-    }
-
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-```python
-    .section-subtitle {
+    .section-description {
         color: var(--muted);
         font-size: 14px;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
     }
 
-    .card {
+    .info-card, .community-card {
         background: var(--white);
+        padding: 18px;
         border: 1px solid var(--border);
         border-radius: 18px;
-        padding: 20px;
-        margin-bottom: 14px;
-    }
-
-    .card-title {
+        margin-bottom: 12px;
         color: var(--dark);
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 7px;
     }
 
-    .muted {
+    .card-description {
         color: var(--muted);
         font-size: 13px;
     }
@@ -355,215 +243,146 @@ st.markdown(
         display: inline-block;
         background: var(--soft);
         color: var(--dark);
+        padding: 6px 12px;
         border-radius: 30px;
-        padding: 5px 11px;
-        font-size: 12px;
-        margin: 3px 3px 3px 0;
-    }
-
-    .stat-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        text-align: center;
-    }
-
-    .stat-number {
-        font-size: 26px;
-        color: var(--dark);
-        font-weight: 700;
-    }
-
-    .stat-label {
-        color: var(--muted);
         font-size: 12px;
     }
 
-    .idea-card {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        margin: 12px 0;
-    }
-
-    .idea-voting-banner {
+    .area {
         background: var(--soft);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 17px 18px;
-        margin: 14px 0 18px;
+        padding: 20px 10px;
+        border-radius: 17px;
         text-align: center;
+        border: 1px solid #D5E0D4;
+        min-height: 140px;
     }
 
-    .idea-voting-banner .banner-title {
-        color: var(--dark);
-        font-size: 17px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
+    .area.outdoor { background: #E0E9DD; }
 
-    .idea-voting-banner .banner-subtitle {
-        color: var(--muted);
-        font-size: 13px;
-    }
-
-    .idea-vote-count {
-        color: var(--green);
-        font-size: 13px;
-        font-weight: 600;
-        margin-top: 8px;
-    }
-
-    .community-cover {
-        background: linear-gradient(135deg, #263D32, #496653);
-        color: white;
-        border-radius: 20px;
-        padding: 24px;
-        margin-bottom: 18px;
-    }
-
-    .community-cover h2 {
-        color: white !important;
-        margin-bottom: 5px;
-    }
-
-    .community-cover p {
-        color: #E7EDE5 !important;
-    }
-
-    .space-box {
-        background: var(--white);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 18px;
-        text-align: center;
-    }
-
-    .space-number {
+    .area h2 {
+        color: var(--dark) !important;
         font-size: 25px;
-        font-weight: 700;
-        color: var(--dark);
     }
 
-    .space-label {
-        font-size: 13px;
-        color: var(--muted);
-    }
-
-    .event-date {
-        background: var(--soft);
-        color: var(--dark);
-        padding: 9px 12px;
-        border-radius: 12px;
-        text-align: center;
-        min-width: 65px;
-        font-weight: 700;
-    }
-
-    .ticket {
-        background: white;
-        border: 1px dashed var(--green);
-        border-radius: 18px;
-        padding: 22px;
-        margin: 14px 0;
-    }
-
-    .badge {
-        display: inline-block;
-        background: var(--soft);
-        border: 1px solid var(--border);
-        border-radius: 30px;
-        padding: 7px 12px;
-        color: var(--dark);
-        font-size: 12px;
-        margin: 4px;
-    }
-
-    /* Buttons */
-    .stButton > button {
+    .stButton button {
         background: var(--dark) !important;
-        color: white !important;
+        color: #FFFFFF !important;
         border: 1px solid var(--dark) !important;
         border-radius: 12px !important;
-        padding: 9px 17px !important;
+        min-height: 43px;
         font-weight: 600 !important;
-        min-height: 42px;
-        width: 100%;
     }
 
-    .stButton > button:hover {
+    .stButton button p, .stButton button span {
+        color: #FFFFFF !important;
+    }
+
+    .stButton button:hover {
         background: var(--green) !important;
         border-color: var(--green) !important;
-        color: white !important;
-    }
-
-    .stTextInput input,
-    .stTextArea textarea,
-    .stSelectbox div[data-baseweb="select"] {
-        background: white !important;
-        border-radius: 10px !important;
     }
 
     div[data-testid="stTabs"] button {
-        color: var(--dark) !important;
+        color: var(--muted) !important;
         font-weight: 600 !important;
+        font-size: 13px !important;
     }
 
     div[data-testid="stTabs"] button[aria-selected="true"] {
-        color: var(--green) !important;
+        color: var(--dark) !important;
     }
 
-    .stAlert {
+    div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+        background-color: var(--green) !important;
+    }
+
+    .stTextInput input, .stTextArea textarea {
+        background: var(--white) !important;
+        color: var(--dark) !important;
+        border: 1px solid #C9D5C9 !important;
         border-radius: 12px !important;
     }
 
-    @media (max-width: 700px) {
+    .stTextInput input::placeholder, .stTextArea textarea::placeholder {
+        color: #829087 !important;
+    }
+
+    .stCheckbox label p { color: var(--dark) !important; }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: var(--white);
+        border: 1px solid var(--border) !important;
+        border-radius: 17px !important;
+    }
+
+    div[data-testid="stMetric"] {
+        background: var(--white);
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+    }
+
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stCaptionContainer"] p {
+        color: var(--muted) !important;
+    }
+
+    div[data-testid="stMetricValue"] { color: var(--dark) !important; }
+
+    .footer {
+        text-align: center;
+        padding: 24px 10px;
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 28px;
+    }
+
+    @media (max-width: 600px) {
         .block-container {
-            padding: 145px 0.85rem 2rem !important;
+            padding: 145px 0.85rem 2.5rem !important;
         }
 
         .st-key-site_header {
-            padding: 9px 12px 9px !important;
+            padding: 9px 9px 9px !important;
         }
 
-        .brand-name {
-            font-size: 23px;
+        .brand {
+            padding: 2px 3px 7px;
         }
 
-        .brand-sub {
-            font-size: 10px;
-        }
+        .brand-name { font-size: 24px; }
+        .brand-sub { font-size: 10px; }
+        .brand-icon { font-size: 23px; }
 
         .st-key-site_header div[data-testid="stRadio"] > div {
-            gap: 4px !important;
+            gap: 5px !important;
         }
 
         .st-key-site_header div[data-testid="stRadio"] label {
-            padding: 7px 1px !important;
-            border-radius: 9px !important;
+            padding: 8px 2px !important;
+            border-radius: 10px !important;
         }
 
-        .st-key-site_header div[data-testid="stRadio"] label p,
-        .st-key-site_header div[data-testid="stRadio"] label span {
+        .st-key-site_header div[data-testid="stRadio"] label p {
             font-size: 11px !important;
         }
 
         .hero {
-            padding: 24px 18px;
+            padding: 23px 17px;
+            border-radius: 18px;
+            margin-top: 10px;
         }
 
-        .hero h1 {
-            font-size: 24px;
-        }
+        .hero h1 { font-size: 24px; }
+        .hero p { font-size: 14px; }
+        .section-title { font-size: 21px; }
+        .community-card { padding: 15px; }
+        .area { min-height: 130px; padding: 15px 6px; }
+        .area h2 { font-size: 21px; }
 
-        .section-title {
-            font-size: 20px;
-        }
-
-        .card {
-            padding: 16px;
+        div[data-testid="stTabs"] button {
+            font-size: 11px !important;
+            padding: 7px 4px !important;
         }
     }
     </style>
@@ -571,280 +390,105 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ------------------------- DATA ---------------------------
 
-# =========================================================
-# DATA
-# =========================================================
-
-COMMUNITIES = {
+communities = {
     "اليوغا": {
-        "emoji": "🧘‍♀️",
-        "description": "مساحة للتوازن والهدوء والحركة الواعية.",
-        "intro": "نلتقي لنمنح أجسادنا وعقولنا مساحة للتنفس والاسترخاء.",
-        "bring": [
-            "ملابس مريحة للحركة",
-            "قارورة ماء",
-            "حصيرة يوغا إن توفرت",
-            "منشفة صغيرة",
+        "icon": "🧘🏻‍♀️",
+        "description": "مساحة للحركة والهدوء والتوازن.",
+        "bring": ["ملابس مريحة", "قارورة ماء", "حصيرة يوغا إن توفرت"],
+        "ideas": [
+            "Sunset Yoga",
+            "جلسة تأمل وتنفس",
+            "Yoga & Coffee",
         ],
-        "activities": ["جلسات يوغا", "تأمل", "تمارين تنفس"],
-        "badge": "Mindful Soul",
     },
     "الفنون": {
-        "emoji": "🎨",
-        "description": "مجتمع يجمع محبي الفن والتجربة والإبداع.",
-        "intro": "جرّب أفكاراً فنية جديدة وشارك إبداعك مع الآخرين.",
-        "bring": [
-            "ملابس مناسبة للتلوين",
-            "دفتر رسم إن توفر",
-            "أدواتك الفنية المفضلة",
+        "icon": "🎨",
+        "description": "مساحة للإبداع والتعبير الفني.",
+        "bring": ["ملابس مناسبة للرسم", "دفتر رسم", "أدواتك الفنية"],
+        "ideas": [
+            "Art Jamming",
+            "جلسة رسم جماعية",
+            "تبادل الأعمال الفنية",
         ],
-        "activities": ["رسم", "تلوين", "تجارب فنية"],
-        "badge": "Creative Mind",
     },
     "الفخار": {
-        "emoji": "🏺",
-        "description": "من الفكرة إلى قطعة تصنعها بيديك.",
-        "intro": "اكتشف متعة تشكيل الطين وصناعة قطعك الخاصة.",
-        "bring": [
-            "ملابس مريحة",
-            "مريلة أو ملابس قابلة للاتساخ",
-            "حماس للتجربة",
+        "icon": "🏺",
+        "description": "تجربة تشكيل الطين وصناعة قطعك الخاصة.",
+        "bring": ["ملابس مريحة", "مريلة", "حماس للتجربة"],
+        "ideas": [
+            "Pottery for Beginners",
+            "اصنع كوبك الخاص",
+            "جلسة تلوين الفخار",
         ],
-        "activities": ["تشكيل الطين", "التلوين", "صناعة القطع"],
-        "badge": "Clay Artist",
     },
     "الخيول": {
-        "emoji": "🐎",
-        "description": "تجربة تجمع بين التعلم والتواصل مع الخيل.",
-        "intro": "اقترب من عالم الخيل وتعرّف على أساسيات التعامل معها.",
-        "bring": [
-            "حذاء مغلق ومريح",
-            "ملابس مناسبة للنشاط",
-            "قارورة ماء",
+        "icon": "🐎",
+        "description": "تجربة للتعرف على الخيل والتواصل معها.",
+        "bring": ["حذاء مغلق", "ملابس مريحة", "قارورة ماء"],
+        "ideas": [
+            "Meet the Horses",
+            "جلسة عناية بالخيل",
+            "مبادئ الفروسية",
         ],
-        "activities": ["التعرف على الخيل", "العناية", "التجربة"],
-        "badge": "Horse Friend",
     },
     "الورش": {
-        "emoji": "💡",
-        "description": "نتعلم معاً ونحوّل الأفكار إلى تجارب.",
-        "intro": "ورش متنوعة تفتح لك أبواباً لمهارات وأفكار جديدة.",
-        "bring": [
-            "دفتر وقلم",
-            "حاسوب محمول عند الحاجة",
-            "استعداد للمشاركة",
+        "icon": "💡",
+        "description": "نتعلم ونشارك المهارات والأفكار.",
+        "bring": ["دفتر وقلم", "حاسوب عند الحاجة", "استعداد للمشاركة"],
+        "ideas": [
+            "Creative Thinking",
+            "AI for Everyone",
+            "جلسة تبادل مهارات",
         ],
-        "activities": ["ورش إبداعية", "جلسات تعلم", "عصف ذهني"],
-        "badge": "Curious Learner",
     },
 }
 
-EVENTS = [
+events = [
     {
-        "title": "Morning Yoga",
-        "community": "اليوغا",
+        "name": "Sunset Yoga",
+        "type": "اليوغا",
         "date": "قريباً",
-        "time": "9:00 AM",
+        "place": "الحديقة الخارجية",
+        "seats": 8,
+        "total": 15,
+    },
+    {
+        "name": "Art Jamming",
+        "type": "الفنون",
+        "date": "قريباً",
         "place": "المساحة الداخلية",
         "seats": 12,
-        "description": "ابدأ يومك بجلسة يوغا هادئة.",
+        "total": 20,
     },
     {
-        "title": "Creative Art Session",
-        "community": "الفنون",
+        "name": "Pottery for Beginners",
+        "type": "الفخار",
         "date": "قريباً",
-        "time": "5:00 PM",
         "place": "المساحة الداخلية",
-        "seats": 8,
-        "description": "مساحة مفتوحة للتجربة الفنية.",
-    },
-    {
-        "title": "Pottery Workshop",
-        "community": "الفخار",
-        "date": "قريباً",
-        "time": "4:00 PM",
-        "place": "المساحة الداخلية",
-        "seats": 10,
-        "description": "اصنع قطعتك الخاصة من الطين.",
-    },
-    {
-        "title": "Horse Experience",
-        "community": "الخيول",
-        "date": "قريباً",
-        "time": "6:00 PM",
-        "place": "الحديقة الخارجية",
         "seats": 6,
-        "description": "تجربة للتعرف على الخيل.",
+        "total": 12,
     },
     {
-        "title": "Ideas & Innovation",
-        "community": "الورش",
+        "name": "Meet the Horses",
+        "type": "الخيول",
         "date": "قريباً",
-        "time": "7:00 PM",
+        "place": "الحديقة الخارجية",
+        "seats": 5,
+        "total": 10,
+    },
+    {
+        "name": "AI for Everyone",
+        "type": "الورش",
+        "date": "قريباً",
         "place": "المساحة الداخلية",
-        "seats": 15,
-        "description": "شارك أفكارك وناقشها مع المجتمع.",
+        "seats": 14,
+        "total": 18,
     },
 ]
 
-DEFAULT_IDEAS = [
-    {
-        "id": "idea_1",
-        "title": "ليلة أفلام في الحديقة",
-        "description": "نجتمع في الهواء الطلق لمشاهدة فيلم وتجربة أجواء مختلفة.",
-        "author": "JAZIF Team",
-        "community": "عام",
-    },
-    {
-        "id": "idea_2",
-        "title": "تبادل الكتب",
-        "description": "كل شخص يحضر كتاباً ويستبدله بكتاب جديد.",
-        "author": "JAZIF Team",
-        "community": "عام",
-    },
-    {
-        "id": "idea_3",
-        "title": "جلسة قهوة ومواهب",
-        "description": "مساحة بسيطة يشارك فيها الأعضاء مواهبهم واهتماماتهم.",
-        "author": "JAZIF Team",
-        "community": "عام",
-    },
-]
-# =========================================================
-# HELPER FUNCTIONS
-# =========================================================
-
-def section_title(title, subtitle=None):
-    st.markdown(
-        f'<div class="section-title">{title}</div>',
-        unsafe_allow_html=True,
-    )
-    if subtitle:
-        st.markdown(
-            f'<div class="section-subtitle">{subtitle}</div>',
-            unsafe_allow_html=True,
-        )
-
-
-def card(title, description="", extra=""):
-    st.markdown(
-        f"""
-        <div class="card">
-            <div class="card-title">{title}</div>
-            <div>{description}</div>
-            {extra}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def get_ideas():
-    return DEFAULT_IDEAS + st.session_state.ideas
-
-
-def get_vote_count(idea_id):
-    return st.session_state.votes.get(idea_id, 0)
-
-
-def vote_for_idea(idea_id):
-    st.session_state.votes[idea_id] = get_vote_count(idea_id) + 1
-
-
-def add_idea(title, description, community):
-    new_idea = {
-        "id": f"member_idea_{len(st.session_state.ideas) + 1}",
-        "title": title,
-        "description": description,
-        "author": "Community Member",
-        "community": community,
-    }
-    st.session_state.ideas.append(new_idea)
-
-
-def show_idea_voting_banner():
-    st.markdown(
-        """
-        <div class="idea-voting-banner">
-            <div class="banner-title">
-                💚 We love it, we support it
-            </div>
-            <div class="banner-subtitle">
-                صوتك يدعم الفكرة ويساعدها تكبر
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def show_ideas(community_filter=None):
-    ideas = get_ideas()
-
-    if community_filter and community_filter != "عام":
-        ideas = [
-            idea for idea in ideas
-            if idea["community"] in [community_filter, "عام"]
-        ]
-
-    show_idea_voting_banner()
-
-    if not ideas:
-        st.info("ما فيه أفكار حالياً، كن أول شخص يشارك فكرته!")
-        return
-
-    for idea in ideas:
-        idea_id = idea["id"]
-        votes = get_vote_count(idea_id)
-
-        st.markdown(
-            f"""
-            <div class="idea-card">
-                <div class="card-title">{idea["title"]}</div>
-                <p>{idea["description"]}</p>
-                <span class="tag">{idea["community"]}</span>
-                <div class="muted">By {idea["author"]}</div>
-                <div class="idea-vote-count">
-                    💚 {votes} support votes
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        if st.button(
-            "💚 We love it, we support it",
-            key=f"vote_{idea_id}",
-            use_container_width=True,
-        ):
-            vote_for_idea(idea_id)
-            st.rerun()
-
-
-def create_qr(data):
-    qr = qrcode.QRCode(
-        version=1,
-        box_size=8,
-        border=3,
-    )
-    qr.add_data(data)
-    qr.make(fit=True)
-
-    image = qr.make_image(
-        fill_color="#263D32",
-        back_color="white",
-    )
-
-    buffer = BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-    return buffer
-
-
-# =========================================================
-# FIXED HEADER / NAVIGATION
-# =========================================================
+# ------------------------- HEADER -------------------------
 
 with st.container(key="site_header"):
     st.markdown(
@@ -873,13 +517,9 @@ with st.container(key="site_header"):
 
     st.session_state.page = selected_page
 
-
-# =========================================================
-# HOME PAGE
-# =========================================================
+# -------------------------- HOME --------------------------
 
 if st.session_state.page == "الرئيسية":
-
     st.markdown(
         """
         <div class="hero">
@@ -894,635 +534,301 @@ if st.session_state.page == "الرئيسية":
         unsafe_allow_html=True,
     )
 
-    section_title(
-        "أهلاً بك في جازف",
-        "مساحة صممت لتكون نقطة بداية لتجارب وصداقات وأفكار جديدة.",
+    st.markdown('<div class="section-title">أهلاً بك في جازف</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="section-description">مساحة صممت لتكون نقطة بداية لتجارب وصداقات وأفكار جديدة.</div>',
+        unsafe_allow_html=True,
     )
 
-    col1, col2, col3 = st.columns(3)
+    a, b, c = st.columns(3)
+    a.metric("المجتمعات", "05")
+    b.metric("المساحة الداخلية", "105 m²")
+    c.metric("الحديقة الخارجية", "533 m²")
 
-    with col1:
-        st.markdown(
-            """
-            <div class="stat-card">
-                <div class="stat-number">5</div>
-                <div class="stat-label">مجتمعات متنوعة</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    st.markdown('<div class="section-title">تجارب ومساحات جازف</div>', unsafe_allow_html=True)
 
-    with col2:
-        st.markdown(
-            """
-            <div class="stat-card">
-                <div class="stat-number">∞</div>
-                <div class="stat-label">أفكار وتجارب</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    feature_cols = st.columns(3)
+    features = [
+        ("🌿", "Community", "مساحات تجمع أصحاب الاهتمامات المشتركة."),
+        ("✨", "Experiences", "تجارب وفعاليات نصنعها معاً."),
+        ("💡", "Ideas", "أفكار الأعضاء تتحول إلى تجارب حقيقية."),
+    ]
 
-    with col3:
-        st.markdown(
-            """
-            <div class="stat-card">
-                <div class="stat-number">1</div>
-                <div class="stat-label">مجتمع واحد يجمعنا</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    section_title(
-        "اكتشف المساحة",
-        "مكان يجمع بين المساحات الداخلية والخارجية.",
-    )
-
-    space1, space2 = st.columns(2)
-
-    with space1:
-        st.markdown(
-            """
-            <div class="space-box">
-                <div class="space-number">105 m²</div>
-                <div class="space-label">المساحة الداخلية</div>
-                <p class="muted">للفعاليات والورش واللقاءات.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with space2:
-        st.markdown(
-            """
-            <div class="space-box">
-                <div class="space-number">533 m²</div>
-                <div class="space-label">الحديقة الخارجية</div>
-                <p class="muted">للتجارب والأنشطة في الهواء الطلق.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    section_title(
-        "مجتمعات جازف",
-        "اختر المجتمع الأقرب لاهتماماتك.",
-    )
-
-    community_columns = st.columns(2)
-
-    for index, (name, info) in enumerate(COMMUNITIES.items()):
-        with community_columns[index % 2]:
+    for col, (icon, title, desc) in zip(feature_cols, features):
+        with col:
             st.markdown(
                 f"""
-                <div class="card">
-                    <div class="card-title">
-                        {info["emoji"]} {name}
-                    </div>
-                    <p>{info["description"]}</p>
-                    <span class="tag">Explore Community</span>
+                <div class="info-card">
+                    <div style="font-size:29px;">{icon}</div>
+                    <b>{title}</b>
+                    <div class="card-description">{desc}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            if st.button(
-                f"استكشف مجتمع {name}",
-                key=f"home_community_{name}",
-            ):
-                st.session_state.community = name
+    st.markdown('<div class="section-title">خريطة المساحة</div>', unsafe_allow_html=True)
+    st.caption("اكتشف مناطق جازف والتجارب التي تقام فيها.")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(
+            """
+            <div class="area">
+                <div style="font-size:28px;">🏡</div>
+                <b>المساحة الداخلية</b>
+                <h2>105 m²</h2>
+                <small>ورش واجتماعات وتجارب داخلية</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with c2:
+        st.markdown(
+            """
+            <div class="area outdoor">
+                <div style="font-size:28px;">🌳</div>
+                <b>الحديقة الخارجية</b>
+                <h2>533 m²</h2>
+                <small>يوغا وفعاليات وتجارب خارجية</small>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown('<div class="section-title">التجارب القادمة</div>', unsafe_allow_html=True)
+
+    for event in events:
+        with st.container(border=True):
+            st.markdown(f"### {event['name']}")
+            st.caption(f"{event['type']} · {event['date']} · {event['place']}")
+            st.write(f"🪑 المقاعد المتبقية: {event['seats']} من {event['total']}")
+            if st.button("استكشف التجربة", key=f"event_{event['name']}", use_container_width=True):
+                st.session_state.community = event["type"]
                 st.session_state.page = "المجتمعات"
                 st.rerun()
 
-    section_title(
-        "الفعاليات القادمة",
-        "تجارب قادمة بانتظارك.",
-    )
+    if st.button("اكتشف جميع المجتمعات ←", use_container_width=True):
+        st.session_state.page = "المجتمعات"
+        st.rerun()
 
-    for event in EVENTS:
-        with st.container():
-            st.markdown(
-                f"""
-                <div class="card">
-                    <div class="card-title">{event["title"]}</div>
-                    <p>{event["description"]}</p>
-                    <span class="tag">{event["community"]}</span>
-                    <span class="tag">📅 {event["date"]}</span>
-                    <span class="tag">🕒 {event["time"]}</span>
-                    <span class="tag">📍 {event["place"]}</span>
-                    <div class="muted">
-                        المقاعد المتبقية: {event["seats"]}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-# =========================================================
-# COMMUNITIES PAGE
-# =========================================================
+# ---------------------- COMMUNITIES PAGE ------------------
 
 elif st.session_state.page == "المجتمعات":
+    st.title("مجتمعات جازف 🌿")
+    st.write("كل مجتمع يبدأ باهتمام، وينمو بالأشخاص الذين يجمعهم.")
+    st.markdown('<div class="section-title">اكتشف مجتمعاتنا</div>', unsafe_allow_html=True)
 
-    section_title(
-        "مجتمعات جازف",
-        "كل مجتمع مساحة تجمع أشخاصاً يشتركون في الاهتمام نفسه.",
-    )
-
-    selected_community = st.selectbox(
-        "اختر المجتمع",
-        list(COMMUNITIES.keys()),
-        index=list(COMMUNITIES.keys()).index(
-            st.session_state.community
-        ),
-        key="community_selector",
-    )
-
-    st.session_state.community = selected_community
-    info = COMMUNITIES[selected_community]
-
-    st.markdown(
-        f"""
-        <div class="community-cover">
-            <h2>{info["emoji"]} {selected_community}</h2>
-            <p>{info["description"]}</p>
-            <p>{info["intro"]}</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    overview_tab, gallery_tab, ideas_tab, members_tab = st.tabs(
-        [
-            "نظرة عامة",
-            "صور سابقة",
-            "مختبر الأفكار",
-            "مساحة الأعضاء",
-        ]
-    )
-
-    # ---------------- OVERVIEW TAB ----------------
-
-    with overview_tab:
-
-        section_title(
-            "عن المجتمع",
-            "اكتشف الأنشطة والتجارب التي يقدمها هذا المجتمع.",
-        )
-
-        card(
-            "وش بنسوي؟",
-            info["intro"],
-        )
-
-        section_title("الأنشطة")
-
-        activity_columns = st.columns(2)
-
-        for index, activity in enumerate(info["activities"]):
-            with activity_columns[index % 2]:
-                st.markdown(
-                    f"""
-                    <div class="card">
-                        <div class="card-title">✨ {activity}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        section_title(
-            "What to Bring",
-            "قائمة بسيطة تساعدك تستعد للتجربة.",
-        )
-
-        checklist_key = f"checklist_{selected_community}"
-
-        if checklist_key not in st.session_state:
-            st.session_state[checklist_key] = []
-
-        for index, item in enumerate(info["bring"]):
-            checked = item in st.session_state[checklist_key]
-
-            if st.checkbox(
-                item,
-                value=checked,
-                key=f"{checklist_key}_{index}",
-            ):
-                if item not in st.session_state[checklist_key]:
-                    st.session_state[checklist_key].append(item)
-            else:
-                if item in st.session_state[checklist_key]:
-                    st.session_state[checklist_key].remove(item)
-
-        completed = len(st.session_state[checklist_key])
-        total = len(info["bring"])
-
-        st.progress(completed / total if total else 0)
-        st.caption(f"أنجزت {completed} من {total}")
-
-        section_title("فعاليات المجتمع")
-
-        community_events = [
-            event for event in EVENTS
-            if event["community"] == selected_community
-        ]
-
-        if community_events:
-            for event in community_events:
-                st.markdown(
-                    f"""
-                    <div class="card">
-                        <div class="card-title">{event["title"]}</div>
-                        <p>{event["description"]}</p>
-                        <span class="tag">📅 {event["date"]}</span>
-                        <span class="tag">🕒 {event["time"]}</span>
-                        <span class="tag">📍 {event["place"]}</span>
-                        <div class="muted">
-                            المقاعد المتبقية: {event["seats"]}
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        if st.button(
-            "💚 سجّل اهتمامك بالمجتمع",
-            key=f"interest_{selected_community}",
-        ):
-            if selected_community not in st.session_state.interests:
-                st.session_state.interests.append(selected_community)
-                st.success("تم تسجيل اهتمامك بنجاح!")
-            else:
-                st.info("أنت مسجل اهتمامك بهذا المجتمع بالفعل.")
-
-    # ---------------- GALLERY TAB ----------------
-
-    with gallery_tab:
-
-        section_title(
-            "لحظات من مجتمعنا",
-            "مساحة لعرض الصور والذكريات من التجارب السابقة.",
-        )
-
-        st.markdown(
-            """
-            <div class="card">
-                <div class="card-title">📸 Coming Soon</div>
-                <p>
-                    قريباً بنشارك هنا صور ولقطات من فعاليات المجتمع
-                    وتجارب أعضائه.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        st.caption(
-            "يمكن إضافة الصور لاحقاً من ملفات المشروع أو روابط الصور."
-        )
-
-    # ---------------- IDEAS TAB ----------------
-
-    with ideas_tab:
-
-        section_title(
-            "مختبر الأفكار",
-            "عندك فكرة؟ شاركها مع المجتمع وخلي الآخرين يدعمونها.",
-        )
-
-        show_ideas(selected_community)
-
-        st.markdown("---")
-
-        section_title(
-            "شاركنا فكرتك",
-            "كل فكرة ممكن تكون بداية تجربة جديدة.",
-        )
-
-        with st.form(
-            key=f"idea_form_{selected_community}",
-            clear_on_submit=True,
-        ):
-
-            idea_title = st.text_input(
-                "عنوان الفكرة",
-                placeholder="مثلاً: جلسة رسم في الحديقة",
-            )
-
-            idea_description = st.text_area(
-                "اشرح فكرتك",
-                placeholder="اكتب تفاصيل بسيطة عن فكرتك...",
-            )
-
-            submitted = st.form_submit_button(
-                "إرسال الفكرة",
-                use_container_width=True,
-            )
-
-            if submitted:
-                if idea_title.strip() and idea_description.strip():
-                    add_idea(
-                        idea_title.strip(),
-                        idea_description.strip(),
-                        selected_community,
-                    )
-                    st.success("وصلتنا فكرتك! شكراً لمشاركتك 💚")
-                    st.rerun()
-                else:
-                    st.warning("فضلاً اكتب عنوان الفكرة ووصفها.")
-
-    # ---------------- MEMBERS TAB ----------------
-
-    with members_tab:
-
-        section_title(
-            "مساحة الأعضاء",
-            "مساحة خاصة للتواصل ومشاركة التحديثات بين أعضاء المجتمع.",
-        )
-
-        st.markdown(
-            """
-            <div class="card">
-                <div class="card-title">🔒 Members Only</div>
-                <p>
-                    هذه المساحة مخصصة للأعضاء المقبولين في المجتمع.
-                    يمكن تطوير تسجيل الدخول والتحقق من العضوية لاحقاً.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        member_message = st.text_area(
-            "اكتب رسالة للمجتمع",
-            placeholder="شارك تحديثاً أو فكرة مع الأعضاء...",
-            key=f"member_message_{selected_community}",
-        )
-
-        if st.button(
-            "نشر الرسالة",
-            key=f"send_message_{selected_community}",
-        ):
-            if member_message.strip():
-                if selected_community not in st.session_state.messages:
-                    st.session_state.messages[selected_community] = []
-
-                st.session_state.messages[selected_community].append(
-                    member_message.strip()
-                )
-
-                st.success("تم نشر رسالتك.")
+    for name, data in communities.items():
+        with st.container(border=True):
+            st.markdown(f"### {data['icon']} {name}")
+            st.caption(data["description"])
+            if st.button(f"اكتشف مجتمع {name}", key=f"open_{name}", use_container_width=True):
+                st.session_state.community = name
                 st.rerun()
-            else:
-                st.warning("اكتب رسالة أولاً.")
 
-        messages = st.session_state.messages.get(
-            selected_community,
-            [],
+    st.divider()
+
+    name = st.session_state.community
+    data = communities[name]
+
+    st.markdown(f"## {data['icon']} مجتمع {name}")
+    st.write(data["description"])
+
+    tab1, tab2, tab3 = st.tabs(["نظرة عامة", "مختبر الأفكار", "مساحة المجتمع"])
+
+    with tab1:
+        st.subheader("عن المجتمع")
+        st.write(data["description"])
+        st.markdown("### من تجاربنا السابقة")
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown(
+                '<div class="info-card">📸<br><b>تجربة سابقة 01</b><div class="card-description">تضاف الصور لاحقاً</div></div>',
+                unsafe_allow_html=True,
+            )
+        with c2:
+            st.markdown(
+                '<div class="info-card">📸<br><b>تجربة سابقة 02</b><div class="card-description">تضاف الصور لاحقاً</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("### What to Bring 🎒")
+        st.caption(f"الأشياء المقترحة لمجتمع {name}")
+        for item in data["bring"]:
+            st.checkbox(item, key=f"bring_{name}_{item}")
+
+        if st.button("سجل اهتمامك بالمجتمع", key=f"interest_{name}", use_container_width=True):
+            if name not in st.session_state.interests:
+                st.session_state.interests.append(name)
+            st.success("تم تسجيل اهتمامك بنجاح! 🌿")
+
+    with tab2:
+        st.subheader("Idea Lab 💡")
+        st.write("شارك أفكارك وصوّت على التجارب التي ترغب برؤيتها.")
+
+        with st.form(f"idea_form_{name}"):
+            new_idea = st.text_input("ما الفكرة التي تقترحها؟", placeholder="اكتب فكرتك هنا...")
+            submitted = st.form_submit_button("＋ أضف اقتراحك", use_container_width=True)
+            if submitted and new_idea.strip():
+                st.session_state.ideas.append({"community": name, "idea": new_idea.strip()})
+                st.success("تمت إضافة فكرتك!")
+
+        st.divider()
+        st.markdown("### أفكار المجتمع")
+        st.markdown(
+            """
+            <div style="
+                background:#E7EDE5;
+                color:#263D32;
+                border:1px solid #D5E0D4;
+                border-radius:14px;
+                padding:13px 15px;
+                margin:8px 0 16px;
+                text-align:center;
+                font-weight:700;
+                font-size:15px;">
+                💚 We love it, we support it!
+                <div style="font-size:12px;font-weight:400;margin-top:4px;">
+                    صوتك يدعم الفكرة ويساعدها تكبر.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        if messages:
-            section_title("رسائل الأعضاء")
+        # Combine suggested ideas and member-submitted ideas so both can receive support.
+        community_ideas = [
+            {"text": idea, "key": f"{name}_suggested_{i}"}
+            for i, idea in enumerate(data["ideas"])
+        ]
+        community_ideas += [
+            {"text": idea["idea"], "key": f"{name}_member_{i}"}
+            for i, idea in enumerate(st.session_state.ideas)
+            if idea["community"] == name
+        ]
 
-            for message in reversed(messages):
-                st.markdown(
-                    f"""
-                    <div class="card">
-                        <p>{message}</p>
-                        <div class="muted">Community Member</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+        for idea in community_ideas:
+            vote_key = idea["key"]
+            with st.container(border=True):
+                st.write(f"💡 {idea['text']}")
+                votes = st.session_state.votes.get(vote_key, 0)
+                st.caption(f"💚 {votes} دعم")
+                if st.button(
+                    "💚 We love it, we support it",
+                    key=f"vote_{vote_key}",
+                    use_container_width=True,
+                ):
+                    st.session_state.votes[vote_key] = votes + 1
+                    st.rerun()
+
+        st.divider()
+        st.subheader("Find a Co-host 🤝")
+        st.write("هل عندك فكرة وتبحث عن شخص يشاركك تنظيمها؟")
+        if st.button("ابحث عن شريك لتنظيم الفكرة", use_container_width=True):
+            st.info("سيتم تطوير نظام البحث عن Co-host لاحقاً.")
+
+    with tab3:
+        st.subheader("Community Space 🔒")
+        st.write("مساحة خاصة للتواصل بين أعضاء المجتمع.")
+
+        accepted = st.toggle("محاكاة: تم قبول تسجيلي في المجتمع", key=f"accepted_{name}")
+
+        if accepted:
+            st.success("مرحباً بك في مساحة المجتمع!")
+            st.markdown("### Community Chat")
+            message = st.text_area("اكتب رسالتك", placeholder="شاركنا أفكارك...", key=f"message_{name}")
+
+            if st.button("إرسال الرسالة", key=f"send_{name}", use_container_width=True):
+                if message.strip():
+                    st.session_state.messages.setdefault(name, [])
+                    st.session_state.messages[name].append(message.strip())
+                    st.success("تم إرسال الرسالة التجريبية.")
+
+            for msg in st.session_state.messages.get(name, []):
+                st.info(msg)
+
+            st.divider()
+            st.markdown("### قنوات التواصل")
+            st.markdown("- 💬 مجموعة WhatsApp (رابط تجريبي)\n- ✉️ البريد الإلكتروني للمجتمع")
         else:
-            st.info("لا توجد رسائل حتى الآن.")
+            st.info("🔒 هذه المساحة متاحة للأعضاء المقبولين فقط.")
 
-
-# =========================================================
-# MY TICKETS PAGE
-# =========================================================
+# ------------------------- DIGITAL PASS -------------------
 
 elif st.session_state.page == "تذاكري":
+    st.title("Digital Pass 🎟️")
+    st.write("تذكرتك الرقمية للدخول إلى جازف.")
 
-    section_title(
-        "تذاكري",
-        "كل تجاربك وحجوزاتك في مكان واحد.",
-    )
+    qr_image = qrcode.make("JAZIF-DEMO-MEMBER-001")
+    qr_buffer = BytesIO()
+    qr_image.save(qr_buffer, format="PNG")
 
-    st.markdown(
-        """
-        <div class="card">
-            <div class="card-title">🎟️ Your JAZIF Pass</div>
-            <p>
-                هنا تظهر التذاكر التي حصلت عليها للفعاليات
-                والتجارب في مساحة جازف.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    ticket_event = st.selectbox(
-        "اختر فعالية لعرض تذكرتها التجريبية",
-        [event["title"] for event in EVENTS],
-        key="ticket_event",
-    )
-
-    selected_event = next(
-        event for event in EVENTS
-        if event["title"] == ticket_event
-    )
-
-    st.markdown(
-        f"""
-        <div class="ticket">
-            <div class="card-title">JAZIF COMMUNITY SPACE</div>
-            <h3>{selected_event["title"]}</h3>
-            <p>{selected_event["description"]}</p>
-            <span class="tag">{selected_event["community"]}</span>
-            <span class="tag">📅 {selected_event["date"]}</span>
-            <span class="tag">🕒 {selected_event["time"]}</span>
-            <span class="tag">📍 {selected_event["place"]}</span>
-            <hr>
-            <div class="muted">DEMO TICKET — NOT A REAL BOOKING</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    qr_data = (
-        f"JAZIF DEMO TICKET | {selected_event['title']} | "
-        f"{selected_event['community']}"
-    )
-
-    qr_image = create_qr(qr_data)
-
-    qr_col1, qr_col2, qr_col3 = st.columns([1, 2, 1])
-
-    with qr_col2:
-        st.image(
-            qr_image,
-            caption="QR Code — Demo",
-            use_container_width=True,
+    with st.container(border=True):
+        st.markdown(
+            "<h2 style='text-align:center;color:#263D32'>JAZIF 🌿</h2>",
+            unsafe_allow_html=True,
         )
+        st.markdown(
+            "<p style='text-align:center;color:#66766A'>MEMBER DIGITAL PASS</p>",
+            unsafe_allow_html=True,
+        )
+        st.image(qr_buffer.getvalue(), width=190)
+        st.markdown(
+            "<h3 style='text-align:center;color:#263D32'>Noura Member</h3>",
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            "<p style='text-align:center;color:#66766A'>Member ID: JZ-001-DEMO</p>",
+            unsafe_allow_html=True,
+        )
+        st.success("Active Member · Demo")
 
-    st.info(
-        "هذه تذكرة تجريبية للعرض فقط، وليست حجزاً فعلياً."
-    )
-    
-# =========================================================
-# MY ACCOUNT PAGE
-# =========================================================
+    st.caption("هذا QR تجريبي للتوضيح فقط، وليس تصريح دخول حقيقي.")
+
+# --------------------------- ACCOUNT ----------------------
 
 elif st.session_state.page == "حسابي":
+    st.title("حسابي 👤")
 
-    section_title(
-        "حسابي",
-        "مساحتك الشخصية في مجتمع جازف.",
-    )
+    with st.container(border=True):
+        st.markdown("## 👩🏻")
+        st.subheader("Noura Member")
+        st.caption("Jazif Community Member")
+        st.markdown('<span class="tag">Active Member</span>', unsafe_allow_html=True)
 
-    st.markdown(
-        """
-        <div class="community-cover">
-            <h2>مرحباً بك في جازف 🌿</h2>
-            <p>كل تجربة تبدأ باهتمام، وكل مجتمع يبدأ بأشخاص مثلك.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("### Badges 🏅")
+    b1, b2, b3 = st.columns(3)
+    b1.metric("Explorer", "01")
+    b2.metric("Ideas", "03")
+    b3.metric("Events", "02")
 
-    section_title("ملفي الشخصي")
-
-    with st.container():
-        st.markdown(
-            """
-            <div class="card">
-                <div class="card-title">Community Member</div>
-                <p class="muted">JAZIF Community Space</p>
-                <span class="tag">🌱 New Member</span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    section_title("مجتمعاتي")
-
+    st.markdown("### مجتمعاتي")
     if st.session_state.interests:
         for community in st.session_state.interests:
-            info = COMMUNITIES[community]
-
-            st.markdown(
-                f"""
-                <div class="card">
-                    <div class="card-title">
-                        {info["emoji"]} {community}
-                    </div>
-                    <p>{info["description"]}</p>
-                    <span class="tag">Joined Interest</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.write(f"{communities[community]['icon']} {community}")
     else:
-        st.info(
-            "ما سجلت اهتمامك بأي مجتمع حتى الآن. "
-            "استكشف المجتمعات واختر اللي يناسبك."
-        )
+        st.caption("لم تسجلي اهتمامك بأي مجتمع حتى الآن.")
 
-    section_title("إنجازاتي وشاراتي")
+    st.divider()
 
-    badges = [
-        ("🌱", "First Step", "أول خطوة في جازف"),
-        ("💡", "Idea Starter", "شاركت فكرة مع المجتمع"),
-        ("💚", "Community Supporter", "دعمت أفكار الآخرين"),
-        ("✨", "Explorer", "استكشفت المجتمعات"),
-    ]
+    if st.button("🎟️ عرض التذاكر الرقمية", use_container_width=True):
+        st.session_state.page = "تذاكري"
+        st.rerun()
 
-    badge_columns = st.columns(2)
+    if st.button("🌿 تصفح المجتمعات", use_container_width=True):
+        st.session_state.page = "المجتمعات"
+        st.rerun()
 
-    for index, (emoji, title, description) in enumerate(badges):
-        with badge_columns[index % 2]:
-            st.markdown(
-                f"""
-                <div class="card">
-                    <div style="font-size:25px;">{emoji}</div>
-                    <div class="card-title">{title}</div>
-                    <div class="muted">{description}</div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-    section_title("نشاطي في جازف")
-
-    total_ideas = len(st.session_state.ideas)
-    total_votes = sum(st.session_state.votes.values())
-    total_interests = len(st.session_state.interests)
-
-    activity_col1, activity_col2, activity_col3 = st.columns(3)
-
-    with activity_col1:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-number">{total_interests}</div>
-                <div class="stat-label">اهتماماتي</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with activity_col2:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-number">{total_ideas}</div>
-                <div class="stat-label">أفكاري</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with activity_col3:
-        st.markdown(
-            f"""
-            <div class="stat-card">
-                <div class="stat-number">{total_votes}</div>
-                <div class="stat-label">تصويتاتي</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-
-# =========================================================
-# FOOTER
-# =========================================================
+# ---------------------------- FOOTER ---------------------
 
 st.markdown(
     """
-    <div style="
-        text-align:center;
-        padding:35px 10px 15px;
-        margin-top:35px;
-        border-top:1px solid #E2E8DF;
-    ">
-        <div style="
-            color:#263D32;
-            font-size:20px;
-            font-weight:700;
-            letter-spacing:1px;
-        ">
-            JAZIF 🌿
-        </div>
-        <div style="
-            color:#66766A;
-            font-size:12px;
-            margin-top:5px;
-        ">
-            A SPACE TO CONNECT, CREATE & GROW
-        </div>
+    <div class="footer">
+        <b style="color:#263D32;">JAZIF COMMUNITY SPACE 🌿</b>
+        <br>
+        A place to connect, create & belong.
     </div>
     """,
     unsafe_allow_html=True,
