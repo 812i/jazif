@@ -1,3 +1,329 @@
+import streamlit as st
+import qrcode
+
+from io import BytesIO
+
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
+
+st.set_page_config(
+    page_title="JAZIF Community Space",
+    page_icon="🌿",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+
+# =========================================================
+# SESSION STATE
+# =========================================================
+
+if "page" not in st.session_state:
+    st.session_state.page = "الرئيسية"
+
+if "community" not in st.session_state:
+    st.session_state.community = "اليوغا"
+
+if "ideas" not in st.session_state:
+    st.session_state.ideas = []
+
+if "votes" not in st.session_state:
+    st.session_state.votes = {}
+
+if "interests" not in st.session_state:
+    st.session_state.interests = []
+
+if "messages" not in st.session_state:
+    st.session_state.messages = {}
+
+
+# =========================================================
+# CUSTOM CSS
+# =========================================================
+
+st.markdown(
+    """
+    <style>
+
+    :root {
+        --dark: #263D32;
+        --green: #496653;
+        --soft: #E7EDE5;
+        --background: #F7F7F2;
+        --white: #FFFFFF;
+        --muted: #66766A;
+        --border: #E2E8DF;
+    }
+
+    .stApp {
+        background-color: var(--background);
+        color: var(--dark);
+    }
+
+    .block-container {
+        padding-top: 158px;
+        padding-bottom: 2rem;
+        max-width: 1100px;
+    }
+
+    .st-key-site_header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999999;
+        background: #F7F7F2;
+        padding: 15px 25px 10px;
+        border-bottom: 1px solid #E2E8DF;
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .brand-name {
+        font-size: 28px;
+        font-weight: 800;
+        color: #263D32;
+        letter-spacing: 2px;
+    }
+
+    .brand-sub {
+        display: block;
+        font-size: 11px;
+        color: #66766A;
+        letter-spacing: 2px;
+    }
+
+    .brand-icon {
+        font-size: 25px;
+    }
+
+    .hero {
+        background: linear-gradient(135deg, #263D32, #496653);
+        padding: 35px;
+        border-radius: 22px;
+        color: white;
+        margin-bottom: 25px;
+    }
+
+    .hero h1 {
+        color: white !important;
+        font-size: 30px;
+    }
+
+    .hero p {
+        color: #E7EDE5;
+        font-size: 15px;
+    }
+
+    .hero-tag {
+        color: #E7EDE5;
+        font-size: 11px;
+        letter-spacing: 2px;
+    }
+
+    .section-title {
+        font-size: 23px;
+        font-weight: 750;
+        color: #263D32;
+        margin-top: 28px;
+        margin-bottom: 7px;
+    }
+
+    .section-subtitle {
+        color: #66766A;
+        font-size: 14px;
+        margin-bottom: 18px;
+    }
+
+    .card {
+        background: white;
+        border: 1px solid #E2E8DF;
+        border-radius: 18px;
+        padding: 20px;
+        margin-bottom: 14px;
+    }
+
+    .card-title {
+        color: #263D32;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .muted {
+        color: #66766A;
+        font-size: 13px;
+    }
+
+    .tag {
+        display: inline-block;
+        background: #E7EDE5;
+        color: #263D32;
+        border-radius: 30px;
+        padding: 5px 11px;
+        font-size: 12px;
+        margin: 3px;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid #E2E8DF;
+        border-radius: 16px;
+        padding: 18px;
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 26px;
+        color: #263D32;
+        font-weight: 700;
+    }
+
+    .stat-label {
+        color: #66766A;
+        font-size: 12px;
+    }
+
+    .idea-card {
+        background: white;
+        border: 1px solid #E2E8DF;
+        border-radius: 16px;
+        padding: 18px;
+        margin: 12px 0;
+    }
+
+    .idea-voting-banner {
+        background: #E7EDE5;
+        border: 1px solid #E2E8DF;
+        border-radius: 16px;
+        padding: 17px 18px;
+        margin: 14px 0 18px;
+        text-align: center;
+    }
+
+    .idea-voting-banner .banner-title {
+        color: #263D32;
+        font-size: 17px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .idea-voting-banner .banner-subtitle {
+        color: #66766A;
+        font-size: 13px;
+    }
+
+    .idea-vote-count {
+        color: #496653;
+        font-size: 13px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+
+    .community-cover {
+        background: linear-gradient(135deg, #263D32, #496653);
+        color: white;
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 18px;
+    }
+
+    .community-cover h2 {
+        color: white !important;
+    }
+
+    .community-cover p {
+        color: #E7EDE5 !important;
+    }
+
+    .space-box {
+        background: white;
+        border: 1px solid #E2E8DF;
+        border-radius: 16px;
+        padding: 18px;
+        text-align: center;
+    }
+
+    .space-number {
+        font-size: 25px;
+        font-weight: 700;
+        color: #263D32;
+    }
+
+    .space-label {
+        font-size: 13px;
+        color: #66766A;
+    }
+
+    .ticket {
+        background: white;
+        border: 1px dashed #496653;
+        border-radius: 18px;
+        padding: 22px;
+        margin: 14px 0;
+    }
+
+    .stButton > button {
+        background: #263D32 !important;
+        color: white !important;
+        border: 1px solid #263D32 !important;
+        border-radius: 12px !important;
+        padding: 9px 17px !important;
+        font-weight: 600 !important;
+        min-height: 42px;
+        width: 100%;
+    }
+
+    .stButton > button:hover {
+        background: #496653 !important;
+        border-color: #496653 !important;
+    }
+
+    @media (max-width: 700px) {
+        .block-container {
+            padding: 145px 0.85rem 2rem !important;
+        }
+
+        .st-key-site_header {
+            padding: 9px 12px;
+        }
+
+        .brand-name {
+            font-size: 23px;
+        }
+
+        .brand-sub {
+            font-size: 10px;
+        }
+
+        .hero {
+            padding: 24px 18px;
+        }
+
+        .hero h1 {
+            font-size: 24px;
+        }
+
+        .section-title {
+            font-size: 20px;
+        }
+
+        .card {
+            padding: 16px;
+        }
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 ```python
     .section-subtitle {
         color: var(--muted);
