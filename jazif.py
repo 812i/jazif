@@ -1,270 +1,512 @@
-import streamlit as st
 
-# 1. إعدادات الصفحة لتناسب الجوال
+import streamlit as st
+import qrcode
+from io import BytesIO
+
+# ---------------- CONFIG ----------------
 st.set_page_config(
-    page_title="مساحة جازف | JAZEF",
+    page_title="JAZIF | Community",
     page_icon="🌿",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# 2. تنسيقات CSS مخصصة للجوال والهوية البصرية (عربي RTL)
+# ---------------- STYLE ----------------
 st.markdown("""
 <style>
-    /* ضبط الاتجاه العربي وتقليل الهوامش للجوال */
-    .main .block-container {
-        max-width: 480px;
-        padding-top: 1rem;
-        padding-bottom: 3rem;
-        direction: rtl;
-        text-align: right;
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+* {
+    font-family: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+html, body, [class*="css"] {
+    direction: rtl;
+}
+
+.stApp {
+    background: #F7F7F3;
+    color: #26382F;
+}
+
+.block-container {
+    max-width: 1100px;
+    padding: 1rem 1.2rem 4rem;
+}
+
+header {visibility: hidden;}
+footer {visibility: hidden;}
+
+.hero {
+    background: #263D32;
+    color: white;
+    padding: 30px 24px;
+    border-radius: 22px;
+    margin: 15px 0;
+}
+
+.hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.hero p {
+    color: #D6E2D8;
+    font-size: 15px;
+}
+
+.section-title {
+    font-size: 23px;
+    font-weight: 700;
+    margin-top: 28px;
+    margin-bottom: 12px;
+    color: #263D32;
+}
+
+.info-card {
+    background: white;
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid #E8EAE4;
+    margin-bottom: 12px;
+}
+
+.community-card {
+    background: white;
+    border: 1px solid #E5E9E2;
+    border-radius: 18px;
+    padding: 18px;
+    min-height: 155px;
+    margin-bottom: 10px;
+}
+
+.community-icon {
+    font-size: 32px;
+}
+
+.muted {
+    color: #78857C;
+    font-size: 13px;
+}
+
+.tag {
+    background: #E9F0E9;
+    color: #365744;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.area {
+    background: #E8EEE7;
+    padding: 20px;
+    border-radius: 16px;
+    text-align: center;
+    min-height: 120px;
+    border: 1px dashed #9AAA9B;
+}
+
+.area.outdoor {
+    background: #E5EBDD;
+}
+
+button[kind="primary"] {
+    background: #365744 !important;
+    border-radius: 12px !important;
+}
+
+div[data-testid="stTabs"] button {
+    font-size: 13px;
+}
+
+div[data-testid="stMetric"] {
+    background: white;
+    padding: 12px;
+    border-radius: 14px;
+}
+
+@media (max-width: 600px) {
+    .block-container {
+        padding: 0.6rem 0.8rem 3rem;
     }
-    
-    /* تنسيق الهيدر العلوي */
-    .mobile-header {
-        background-color: #1E293B;
-        color: white;
-        padding: 12px 16px;
-        border-radius: 14px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
+    .hero {
+        padding: 23px 17px;
+        border-radius: 18px;
     }
-    
-    /* بطاقات التجارب والخريطة */
-    .exp-card {
-        background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 12px;
-        margin-bottom: 10px;
+    .hero h1 {
+        font-size: 25px;
     }
-    .badge-soon {
-        background-color: #DCFCE7;
-        color: #166534;
-        padding: 3px 8px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: bold;
+    .section-title {
+        font-size: 20px;
     }
-    .badge-later {
-        background-color: #FEF3C7;
-        color: #92400E;
-        padding: 3px 8px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: bold;
+    .community-card {
+        min-height: 130px;
+        padding: 13px;
     }
-    
-    /* بطاقة التذكرة الرقمية QR */
-    .digital-pass {
-        background: linear-gradient(135deg, #0F172A, #334155);
-        color: white;
-        padding: 18px;
-        border-radius: 16px;
-        text-align: center;
-        margin: 10px 0;
-    }
-    
-    /* تحسين أزرار ستريملت للجوال */
-    .stButton > button {
-        width: 100%;
-        border-radius: 10px;
-        font-weight: bold;
-    }
+}
 </style>
 """, unsafe_allow_html=True)
 
-# 3. بيانات تجريبية للمجتمعات (لتكون ديناميكية)
-COMMUNITIES = {
-    "يوغا وتأمل 🧘‍♀️": {
-        "desc": "جلسات صباحية ومسائية في الحديقة الخارجية لتصفية الذهن واستعادة التوازن.",
-        "checklist": ["سجادة يوغا (Mat)", "ملابس رياضية مريحة", "مطارة ماء شخصية", "منشفة صغيرة"],
-        "member_approved": True,
-        "past_images": ["🌅 يوغا الشروق", "🌿 تأمل الحديقة"]
+
+# ---------------- DATA ----------------
+communities = {
+    "اليوغا": {
+        "icon": "🧘🏻‍♀️",
+        "description": "مساحة للحركة والهدوء والتوازن.",
+        "bring": ["ملابس مريحة", "حصيرة يوغا", "قارورة ماء"],
+        "ideas": ["جلسة يوغا عند الغروب", "Morning Yoga", "يوغا وتأمل"]
     },
-    "فنون وفخار 🎨": {
-        "desc": "ورش عمل حرة لتشكيل الفخار والرسم على الكانفس في المساحة الداخلية المكيفة.",
-        "checklist": ["مريلة رسم (أو ملابس لا تمانع اتساخها)", "دفتر سكتش لأفكارك", "كل الأدوات الفنية متوفرة لدينا!"],
-        "member_approved": False,
-        "past_images": ["🏺 ورشة الفخار", "🖌️ ليلة الرسم الحر"]
+    "الفنون": {
+        "icon": "🎨",
+        "description": "مجتمع يجمع محبي الفن والتجارب الإبداعية.",
+        "bring": ["ملابس مناسبة للتلوين", "دفتر رسم", "أدواتك الفنية"],
+        "ideas": ["رسم جماعي", "Art & Coffee", "ورشة ألوان مائية"]
     },
-    "فروسية وخيول 🐎": {
-        "desc": "لقاءات لعشاق الخيل وتجارب ركوب وتعلم أساسيات التعامل مع الخيول.",
-        "checklist": ["حذاء مغلق ومناسب (Boots)", "بنطال مريح", "قفازات ركوب (اختياري)"],
-        "member_approved": True,
-        "past_images": ["🐎 جولة المساء", "🌾 العناية بالخيل"]
+    "الفخار": {
+        "icon": "🏺",
+        "description": "اكتشف متعة صناعة الأشياء بيديك.",
+        "bring": ["ملابس مريحة", "مريلة", "روح إبداعية"],
+        "ideas": ["صناعة أكواب", "ورشة تشكيل الطين", "Pottery & Coffee"]
+    },
+    "الخيول": {
+        "icon": "🐎",
+        "description": "مجتمع لمحبي الخيل والتجارب الخارجية.",
+        "bring": ["ملابس مناسبة", "حذاء مغلق", "ماء"],
+        "ideas": ["لقاء لمحبي الخيل", "جلسة تعريفية", "تجربة ركوب"]
+    },
+    "الورش": {
+        "icon": "🛠️",
+        "description": "نتعلم أشياء جديدة ونتشارك المهارات.",
+        "bring": ["دفتر ملاحظات", "قلم", "حاسوب عند الحاجة"],
+        "ideas": ["ورشة ابتكار", "تبادل المهارات", "لقاء تعليمي"]
     }
 }
 
-# 4. الهيدر الثابت (Sticky Header) + زر الملف الشخصي والتذكرة
+events = [
+    {"name": "Morning Yoga", "type": "اليوغا", "date": "20 نوفمبر",
+     "place": "الحديقة الخارجية", "seats": 4, "total": 12},
+    {"name": "Art & Coffee", "type": "الفنون", "date": "22 نوفمبر",
+     "place": "المساحة الداخلية", "seats": 7, "total": 15},
+    {"name": "Pottery Workshop", "type": "الفخار", "date": "25 نوفمبر",
+     "place": "المساحة الداخلية", "seats": 3, "total": 10}
+]
+
+# ---------------- SESSION ----------------
+if "page" not in st.session_state:
+    st.session_state.page = "الرئيسية"
+
+if "community" not in st.session_state:
+    st.session_state.community = "اليوغا"
+
+if "ideas" not in st.session_state:
+    st.session_state.ideas = []
+
+if "votes" not in st.session_state:
+    st.session_state.votes = {}
+
+if "registered" not in st.session_state:
+    st.session_state.registered = False
+
+
+# ---------------- HEADER ----------------
 st.markdown("""
-<div class="mobile-header">
+<div style="display:flex;justify-content:space-between;
+align-items:center;padding:5px 0;">
     <div>
-        <strong style="font-size:18px;">🌿 مساحة جازف</strong><br>
-        <span style="font-size:11px; color:#CBD5E1;">مجتمعات، تجارب، ومساحة حرة</span>
+        <span style="font-size:27px;font-weight:700;color:#294333;">
+        JAZIF</span>
+        <span style="font-size:12px;color:#829087;"> COMMUNITY SPACE</span>
     </div>
-    <div style="text-align:left;">
-        <span style="background:#334155; padding:6px 10px; border-radius:20px; font-size:13px;">👤 حسابي</span>
-    </div>
+    <div style="font-size:24px;">🌿</div>
 </div>
 """, unsafe_allow_html=True)
 
-# قائمة الحساب المنسدلة (Badges + المجتمعات + الـ Digital Pass)
-with st.expander("👤 قائمة حسابي & التذكرة الرقمية (Digital Pass)"):
-    col_p1, col_p2 = st.columns([2, 1])
-    with col_p1:
-        st.markdown("**أهلاً بك في جازف 👋**")
-        st.caption("🏅 الأوسمة: مؤسس مجتمع • حاضر 3 تجارب")
-        st.caption("📌 مجتمعاتي: اليوغا، الفروسية")
-    with col_p2:
-        show_qr = st.toggle("تذكرتي 🎟️", value=False)
-    
-    if show_qr:
-        st.markdown("""
-        <div class="digital-pass">
-            <div style="font-size:13px; color:#94A3B8;">JAZEF DIGITAL PASS</div>
-            <h3 style="margin:5px 0; color:white;">#JZF-2026-88</h3>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=JAZEF-PASS-88" style="border-radius:8px; margin:8px 0; background:white; padding:5px;">
-            <div style="font-size:12px; color:#38BDF8;">✅ صالح للدخول عند البوابة</div>
-        </div>
-        """, unsafe_allow_html=True)
+pages = ["الرئيسية", "المجتمعات", "تذاكري", "حسابي"]
 
-# 5. شريط التنقل الرئيسي للجوال (بديل روابط الهيدر)
-page = st.radio(
+selected_page = st.radio(
     "التنقل",
-    ["🏠 الرئيسية", "🤝 المجتمعات", "📝 تسجيل / شركات"],
+    pages,
+    index=pages.index(st.session_state.page),
     horizontal=True,
     label_visibility="collapsed"
 )
 
+st.session_state.page = selected_page
+
 st.divider()
 
-# ==========================================
-# الصفحة 1: الرئيسية (Home 1)
-# ==========================================
-if page == "🏠 الرئيسية":
-    # أ) التعريف بالمبادرة
-    st.subheader("فكرة تتجاوز جدران المكان ✨")
-    st.write("في **جازف**، نهيئ لك مساحة مرنة تجمع بين الهدوء والحيوية لتبني مجتمعك، تطلق ورشتك، أو تعيش تجربة جديدة.")
-    
-    # ب) مرونة المساحة (صور سريعة)
-    st.markdown("#### 🔄 مرونة المساحة")
-    c1, c2, c3 = st.columns(3)
-    c1.info("🧘‍♀️ **يوغا**\n\nصباحية")
-    c2.success("🎶 **حفل**\n\nموسيقي")
-    c3.warning("🎨 **ورش**\n\nإبداعية")
-    
+
+# ================= HOME =================
+if st.session_state.page == "الرئيسية":
+
+    st.markdown("""
+    <div class="hero">
+        <span class="tag">A SPACE TO CONNECT</span>
+        <h1>أهلاً بك في جازف 🌿</h1>
+        <p>
+        مساحة تجمع الناس والأفكار والتجارب.
+        مكان نلتقي فيه، نتعلم، ونصنع ذكريات جديدة.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-title">اكتشف جازف</div>',
+                unsafe_allow_html=True)
+
+    st.write("مساحة مرنة تتغير بتغير الأشخاص والأنشطة والمجتمعات.")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown('<div class="info-card">🧘🏻‍♀️<br><b>Yoga</b><br><small>حركة وهدوء</small></div>',
+                    unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="info-card">🎨<br><b>Art</b><br><small>فن وإبداع</small></div>',
+                    unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div class="info-card">🛠️<br><b>Workshops</b><br><small>تعلم وتجربة</small></div>',
+                    unsafe_allow_html=True)
+
+    st.markdown('<div class="section-title">خريطة المساحة</div>',
+                unsafe_allow_html=True)
+
+    st.caption("اكتشف مناطق جازف والتجارب التي تقام فيها.")
+
+    c1, c2 = st.columns(2)
+
+    with c1:
+        st.markdown("""
+        <div class="area">
+        🏡<br><b>المساحة الداخلية</b><br>
+        <h2>105 m²</h2>
+        <small>ورش واجتماعات وتجارب داخلية</small>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown("""
+        <div class="area outdoor">
+        🌳<br><b>الحديقة الخارجية</b><br>
+        <h2>533 m²</h2>
+        <small>يوغا وفعاليات وتجارب خارجية</small>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown('<div class="section-title">التجارب القادمة</div>',
+                unsafe_allow_html=True)
+
+    for event in events:
+        with st.container(border=True):
+            st.markdown(f"**{event['name']}**")
+            st.caption(f"{event['type']} · {event['date']} · {event['place']}")
+            st.write(f"🪑 المقاعد المتبقية: {event['seats']} من {event['total']}")
+            if st.button("استكشف التجربة", key=f"event_{event['name']}",
+                         use_container_width=True):
+                st.session_state.community = event["type"]
+                st.session_state.page = "المجتمعات"
+                st.rerun()
+
+    if st.button("اكتشف جميع المجتمعات ←", use_container_width=True):
+        st.session_state.page = "المجتمعات"
+        st.rerun()
+
+
+# ================= COMMUNITIES =================
+elif st.session_state.page == "المجتمعات":
+
+    st.title("مجتمعات جازف")
+    st.write("كل مجتمع يبدأ باهتمام، وينمو بالأشخاص الذين يجمعهم.")
+
+    for name, data in communities.items():
+        with st.container(border=True):
+            st.markdown(f"### {data['icon']} {name}")
+            st.caption(data["description"])
+
+            if st.button(f"اكتشف مجتمع {name}", key=f"open_{name}",
+                         use_container_width=True):
+                st.session_state.community = name
+                st.rerun()
+
     st.divider()
-    
-    # ج) خريطة التجارب التفاعلية (Map) مقسمة: داخلية 105م² وخارجية 533م²
-    st.subheader("🗺️ خريطة المساحة والتجارب")
-    
-    zone = st.segmented_control(
-        "اختر القسم في الخريطة:",
-        ["🌳 الحديقة الخارجية (533 م²)", "🏠 المساحة الداخلية (105 م²)"],
-        default="🌳 الحديقة الخارجية (533 م²)"
-    )
-    
-    if zone == "🌳 الحديقة الخارجية (533 م²)":
-        st.markdown("""
-        <div class="exp-card">
-            <span class="badge-soon">🟢 قريباً - اليوم 6:00 م</span>
-            <h4 style="margin:6px 0;">جلسة يوغا الغروب</h4>
-            <p style="font-size:13px; margin:2px 0;">📍 الحديقة الخارجية • ⏳ باقي <b>4 مقاعد</b> من 12</p>
-        </div>
-        <div class="exp-card">
-            <span class="badge-later">🟡 الأسبوع القادم - الجمعة 8:00 م</span>
-            <h4 style="margin:6px 0;">أمسية موسيقية مفتوحة</h4>
-            <p style="font-size:13px; margin:2px 0;">📍 المسرح الخارجي • ⏳ باقي <b>11 مقعد</b> من 30</p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div class="exp-card">
-            <span class="badge-soon">🟢 غداً - 5:30 م</span>
-            <h4 style="margin:6px 0;">ورشة تشكيل الفخار للمبتدئين</h4>
-            <p style="font-size:13px; margin:2px 0;">📍 الاستوديو الداخلي • ⏳ باقي <b>2 مقعد</b> من 8</p>
-        </div>
-        """, unsafe_allow_html=True)
 
-# ==========================================
-# الصفحة 2: المجتمعات (Communities)
-# ==========================================
-elif page == "🤝 المجتمعات":
-    st.subheader("اختر مجتمعك واستكشف التفاصيل")
-    
-    # اختيار المجتمع (يحاكي الضغط على بطاقة المجتمع والانتقال لصفحته)
-    selected_comm = st.selectbox("المجتمعات المتاحة:", list(COMMUNITIES.keys()))
-    comm_data = COMMUNITIES[selected_comm]
-    
-    st.markdown(f"### {selected_comm}")
-    
-    # التبويبات الثلاثة النظيفة داخل صفحة المجتمع
-    tab1, tab2, tab3 = st.tabs(["📌 نظرة عامة", "💡 مختبر الأفكار", "💬 مساحة المجتمع"])
-    
-    # تبويب 1: نظرة عامة + قائمة ماذا تحضر معك الديناميكية
+    name = st.session_state.community
+    data = communities[name]
+
+    st.markdown(f"## {data['icon']} مجتمع {name}")
+    st.write(data["description"])
+
+    tab1, tab2, tab3 = st.tabs([
+        "نظرة عامة",
+        "مختبر الأفكار",
+        "مساحة المجتمع"
+    ])
+
+    # TAB 1
     with tab1:
-        st.write(comm_data["desc"])
-        
-        # قائمة What to Bring الديناميكية حسب المجتمع
-        with st.container(border=True):
-            st.markdown("**🎒 ماذا تحضر معك؟ (What to Bring)**")
-            for item in comm_data["checklist"]:
-                st.checkbox(item, key=f"{selected_comm}_{item}")
-                
-        st.markdown("**📸 من لقاءاتنا السابقة:**")
-        img_cols = st.columns(2)
-        for idx, img_label in enumerate(comm_data["past_images"]):
-            img_cols[idx].info(img_label)
-            
-        if st.button("✨ سجل اهتمامك بهذا المجتمع", type="primary"):
-            st.toast("تم إرسال طلب انضمامك! سيصلك إشعار عند القبول.")
+        st.subheader("عن المجتمع")
+        st.write(data["description"])
 
-    # تبويب 2: مختبر الأفكار (اقتراح + تصويت + Find a Co-host)
+        st.markdown("**من تجاربنا السابقة**")
+
+        p1, p2 = st.columns(2)
+        with p1:
+            st.markdown("🖼️ **تجربة سابقة 01**")
+            st.caption("صورة تجريبية - تضاف الصور لاحقاً")
+        with p2:
+            st.markdown("🖼️ **تجربة سابقة 02**")
+            st.caption("صورة تجريبية - تضاف الصور لاحقاً")
+
+        st.subheader("What to Bring")
+        for item in data["bring"]:
+            st.checkbox(item, key=f"bring_{name}_{item}")
+
+        if st.button("سجل اهتمامك بالمجتمع", key="interest",
+                     use_container_width=True):
+            st.session_state.registered = True
+            st.success("تم تسجيل اهتمامك بنجاح!")
+
+    # TAB 2
     with tab2:
-        st.markdown("**أفكار مقترحة من الأعضاء للتجربة القادمة:**")
-        with st.container(border=True):
-            st.write("💡 **تجربة دمج الرسم مع الموسيقى الحية**")
-            col_v1, col_v2 = st.columns(2)
-            col_v1.button("👍 تصويت (18)", key="vote1")
-            col_v2.button("🤝 Find a Co-host", key="cohost1")
-            
-        with st.expander("➕ اقترح فكرة جديدة"):
-            st.text_input("عنوان التجربة")
-            st.checkbox("أبحث عن شريك تنظيم (Co-host)")
-            st.button("نشر الفكرة للتصويت")
+        st.subheader("Idea Lab 💡")
+        st.write("شارك أفكارك، وصوّت على التجارب التي ترغب برؤيتها.")
 
-    # تبويب 3: مساحة المجتمع (مقفلة إلا للمقبولين)
+        with st.form("idea_form"):
+            new_idea = st.text_input(
+                "ما الفكرة التي تقترحها؟",
+                placeholder="اكتب فكرتك هنا..."
+            )
+            submitted = st.form_submit_button(
+                "＋ أضف اقتراحك",
+                use_container_width=True
+            )
+
+            if submitted and new_idea.strip():
+                st.session_state.ideas.append({
+                    "community": name,
+                    "idea": new_idea.strip()
+                })
+                st.success("تمت إضافة فكرتك!")
+
+        st.divider()
+        st.markdown("**أفكار مقترحة**")
+
+        for i, idea in enumerate(data["ideas"]):
+            key = f"{name}_{i}"
+            with st.container(border=True):
+                st.write(f"💡 {idea}")
+                st.caption(f"الأصوات: {st.session_state.votes.get(key, 0)}")
+                if st.button("👍 صوّت", key=f"vote_{key}"):
+                    st.session_state.votes[key] = (
+                        st.session_state.votes.get(key, 0) + 1
+                    )
+                    st.rerun()
+
+        for idea in st.session_state.ideas:
+            if idea["community"] == name:
+                st.write("💡 " + idea["idea"])
+
+        st.divider()
+        st.subheader("Find a Co-host 🤝")
+        st.write("هل عندك فكرة وتبحث عن شخص يشاركك تنظيمها؟")
+
+        if st.button("ابحث عن شريك لتنظيم الفكرة",
+                     use_container_width=True):
+            st.info("سيتم تطوير نظام البحث عن Co-host لاحقاً.")
+
+    # TAB 3
     with tab3:
-        if comm_data["member_approved"]:
-            st.success("✅ أنت عضو مقبول في هذا المجتمع")
-            st.link_button("📲 دخول قروب الواتساب الرسمي", "https://whatsapp.com")
-            st.markdown("---")
-            st.markdown("**💬 شات المجتمع (تحت إشراف الأدمن):**")
-            st.chat_message("assistant").write("أهلاً بالجميع! تذكير: لقاءنا القادم الساعة 6 مساءً 🌿")
-            st.chat_message("user").write("متحمسين جداً! هل المواقف متوفرة عند البوابة؟")
-            st.chat_input("اكتب رسالتك للمجتمع...")
-        else:
-            st.warning("🔒 هذه المساحة (الشات وقروب الواتساب) تظهر فقط للأعضاء المقبولين في المجتمع.")
-            st.caption("سجّل اهتمامك من تبويب (نظرة عامة) ليتم تفعيل الوصول لك.")
+        st.subheader("Community Space 🔒")
 
-# ==========================================
-# الصفحة 3: تسجيل جديد / تسجيل شركات
-# ==========================================
-elif page == "📝 تسجيل / شركات":
-    reg_type = st.segmented_control("نوع التسجيل:", ["👤 تسجيل أفراد", "🏢 تسجيل شركات / جهات"], default="👤 تسجيل أفراد")
-    
-    with st.form("reg_form"):
-        if reg_type == "👤 تسجيل أفراد":
-            st.text_input("الاسم الكامل")
-            st.text_input("رقم الجوال (واتساب)")
-            st.multiselect("المجتمعات التي تهمك", list(COMMUNITIES.keys()))
+        accepted = st.toggle(
+            "محاكاة: تم قبول تسجيلي في المجتمع",
+            value=False
+        )
+
+        if accepted:
+            st.success("مرحباً بك في مساحة المجتمع!")
+            st.text_area(
+                "Community Chat",
+                placeholder="اكتب رسالة تجريبية..."
+            )
+            st.button("إرسال الرسالة", use_container_width=True)
+
+            st.markdown("**قنوات التواصل**")
+            st.markdown("- مجموعة WhatsApp (رابط تجريبي)")
+            st.markdown("- البريد الإلكتروني للمجتمع")
+            st.caption("المساحة الحقيقية تكون للأعضاء المقبولين فقط.")
         else:
-            st.text_input("اسم الشركة / الجهة")
-            st.selectbox("نوع التعاون", ["حجز المساحة لفعالية خاصة", "رعاية مجتمع", "ورشة عمل لموظفي الشركة"])
-            st.text_input("البريد الإلكتروني الرسمي")
-            
-        if st.form_submit_button("إرسال الطلب 🚀", type="primary"):
-            st.success("تم استلام بياناتك بنجاح! فريق جازف سيتواصل معك قريباً.")
+            st.info("🔒 هذه المساحة متاحة للأعضاء المقبولين فقط.")
+
+
+# ================= DIGITAL PASS =================
+elif st.session_state.page == "تذاكري":
+
+    st.title("Digital Pass 🎟️")
+    st.write("تذكرتك الرقمية للدخول إلى جازف.")
+
+    qr = qrcode.make("JAZIF-DEMO-MEMBER-001")
+    buffer = BytesIO()
+    qr.save(buffer, format="PNG")
+
+    with st.container(border=True):
+        st.markdown("<h2 style='text-align:center'>JAZIF</h2>",
+                    unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center'>MEMBER DIGITAL PASS</p>",
+                    unsafe_allow_html=True)
+
+        st.image(buffer.getvalue(), width=190)
+
+        st.markdown("<h3 style='text-align:center'>Noura Member</h3>",
+                    unsafe_allow_html=True)
+
+        st.markdown(
+            "<p style='text-align:center;color:#78857C'>"
+            "Member ID: JZ-001-DEMO</p>",
+            unsafe_allow_html=True
+        )
+
+        st.success("Active Member · Demo")
+
+    st.caption("هذا QR تجريبي للتوضيح فقط، وليس تصريح دخول حقيقي.")
+
+
+# ================= ACCOUNT =================
+elif st.session_state.page == "حسابي":
+
+    st.title("حسابي 👤")
+
+    with st.container(border=True):
+        st.markdown("## 👩🏻")
+        st.subheader("Noura Member")
+        st.caption("Jazif Community Member")
+        st.markdown('<span class="tag">Active Member</span>',
+                    unsafe_allow_html=True)
+
+    st.markdown("### Badges 🏅")
+    b1, b2, b3 = st.columns(3)
+    b1.metric("Explorer", "01")
+    b2.metric("Ideas", "03")
+    b3.metric("Events", "02")
+
+    st.markdown("### مجتمعاتي")
+    st.write("🧘🏻‍♀️ اليوغا")
+    st.write("🎨 الفنون")
+
+    if st.button("عرض التذاكر الرقمية", use_container_width=True):
+        st.session_state.page = "تذاكري"
+        st.rerun()
+
+    if st.button("تصفح المجتمعات", use_container_width=True):
+        st.session_state.page = "المجتمعات"
+        st.rerun()
+
+
+# ---------------- FOOTER ----------------
+st.divider()
+st.markdown("""
+<div style="text-align:center;color:#8A958C;padding:15px;">
+    JAZIF COMMUNITY SPACE 🌿<br>
+    <small>A place to connect, create & belong.</small>
+</div>
+""", unsafe_allow_html=True)
