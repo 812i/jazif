@@ -4,7 +4,7 @@ import qrcode
 from io import BytesIO
 
 # ==================================================
-# CONFIG
+# CONFIGURATION
 # ==================================================
 
 st.set_page_config(
@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ==================================================
-# JAZIF BRAND COLORS
+# COLORS
 # ==================================================
 
 DARK = "#263D32"
@@ -23,13 +23,11 @@ GREEN = "#496653"
 SOFT_GREEN = "#E7EDE5"
 BG = "#F7F7F2"
 WHITE = "#FFFFFF"
-TEXT = "#263D32"
 MUTED = "#66766A"
 BORDER = "#E2E8DF"
-ACCENT = "#B6C5B5"
 
 # ==================================================
-# COMPLETE MOBILE-FIRST CSS
+# CSS - MOBILE FIRST + STICKY NAVIGATION
 # ==================================================
 
 st.markdown("""
@@ -42,10 +40,11 @@ st.markdown("""
     --soft: #E7EDE5;
     --bg: #F7F7F2;
     --white: #FFFFFF;
-    --text: #263D32;
     --muted: #66766A;
     --border: #E2E8DF;
 }
+
+/* GENERAL */
 
 html, body, [class*="css"], button, input, textarea {
     font-family: 'IBM Plex Sans Arabic', sans-serif !important;
@@ -53,7 +52,7 @@ html, body, [class*="css"], button, input, textarea {
 
 .stApp {
     background: var(--bg) !important;
-    color: var(--text) !important;
+    color: var(--dark) !important;
 }
 
 .block-container {
@@ -61,27 +60,20 @@ html, body, [class*="css"], button, input, textarea {
     padding: 1rem 1.2rem 3rem;
 }
 
-header, footer {
+header, footer, #MainMenu {
     visibility: hidden;
 }
 
-#MainMenu {
-    visibility: hidden;
-}
-
-/* GLOBAL TEXT */
+/* TEXT */
 
 .stApp p,
 .stApp li,
 .stApp label,
-.stApp span,
-.stMarkdown,
-.stText,
-.stCaption {
-    color: var(--text);
+.stMarkdown {
+    color: var(--dark);
 }
 
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4 {
     color: var(--dark) !important;
     font-weight: 700 !important;
     line-height: 1.5 !important;
@@ -91,13 +83,13 @@ p {
     line-height: 1.8;
 }
 
-/* HEADER */
+/* BRAND HEADER */
 
 .brand {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0 18px;
+    padding: 8px 0 16px;
 }
 
 .brand-name {
@@ -117,41 +109,60 @@ p {
     font-size: 27px;
 }
 
-/* NAVIGATION */
+/* STICKY NAVIGATION */
 
 div[data-testid="stRadio"] {
-    width: 100%;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 99999 !important;
+    background: var(--bg) !important;
+    width: 100% !important;
+    padding: 12px 0 14px !important;
+    margin: 0 !important;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 5px 12px rgba(38, 61, 50, 0.07);
 }
+
+/* Hide navigation label */
 
 div[data-testid="stRadio"] > label {
-    display: none;
+    display: none !important;
 }
+
+/* Navigation layout */
 
 div[data-testid="stRadio"] > div {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 7px !important;
+    width: 100% !important;
 }
 
+/* Navigation items */
+
 div[data-testid="stRadio"] label {
-    background: #FFFFFF !important;
+    background: var(--white) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 12px !important;
-    padding: 8px 13px !important;
-    flex: 1 1 auto;
-    justify-content: center;
-    min-width: 0;
+    border-radius: 13px !important;
+    padding: 10px 5px !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    justify-content: center !important;
     margin: 0 !important;
 }
+
+/* Navigation text */
 
 div[data-testid="stRadio"] label p,
 div[data-testid="stRadio"] label span {
     color: var(--dark) !important;
     font-size: 13px !important;
     font-weight: 600 !important;
+    white-space: nowrap !important;
     opacity: 1 !important;
 }
+
+/* Active navigation */
 
 div[data-testid="stRadio"] label:has(input:checked) {
     background: var(--dark) !important;
@@ -164,7 +175,12 @@ div[data-testid="stRadio"] label:has(input:checked) span {
 }
 
 /* Hide radio circles */
+
 div[data-testid="stRadio"] label > div:first-child {
+    display: none !important;
+}
+
+div[data-testid="stRadio"] div[role="radio"] > div:first-child {
     display: none !important;
 }
 
@@ -191,15 +207,15 @@ div[data-testid="stRadio"] label > div:first-child {
 
 .hero-tag {
     display: inline-block;
-    background: #E7EDE5;
-    color: #263D32 !important;
+    background: var(--soft);
+    color: var(--dark) !important;
     padding: 7px 14px;
     border-radius: 30px;
     font-size: 12px;
     font-weight: 600;
 }
 
-/* SECTION TITLES */
+/* SECTIONS */
 
 .section-title {
     font-size: 24px;
@@ -217,7 +233,7 @@ div[data-testid="stRadio"] label > div:first-child {
 /* CARDS */
 
 .info-card {
-    background: #FFFFFF;
+    background: var(--white);
     padding: 20px;
     border: 1px solid var(--border);
     border-radius: 19px;
@@ -226,21 +242,19 @@ div[data-testid="stRadio"] label > div:first-child {
 }
 
 .community-card {
-    background: #FFFFFF;
+    background: var(--white);
     border: 1px solid var(--border);
     border-radius: 20px;
     padding: 19px;
     margin-bottom: 12px;
 }
 
-.community-icon {
-    font-size: 32px;
-}
-
 .card-description {
     color: var(--muted);
     font-size: 13px;
 }
+
+/* TAGS */
 
 .tag {
     display: inline-block;
@@ -251,10 +265,10 @@ div[data-testid="stRadio"] label > div:first-child {
     font-size: 12px;
 }
 
-/* MAP */
+/* SPACE MAP */
 
 .area {
-    background: #E7EDE5;
+    background: var(--soft);
     padding: 22px 12px;
     border-radius: 18px;
     text-align: center;
@@ -271,16 +285,6 @@ div[data-testid="stRadio"] label > div:first-child {
     font-size: 27px;
 }
 
-/* EVENTS */
-
-.event-card {
-    background: #FFFFFF;
-    border: 1px solid var(--border);
-    border-radius: 17px;
-    padding: 17px;
-    margin-bottom: 12px;
-}
-
 /* BUTTONS */
 
 .stButton button {
@@ -290,7 +294,6 @@ div[data-testid="stRadio"] label > div:first-child {
     border-radius: 13px !important;
     min-height: 43px;
     font-weight: 600 !important;
-    transition: 0.2s ease;
 }
 
 .stButton button p,
@@ -327,7 +330,7 @@ div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
 
 .stTextInput input,
 .stTextArea textarea {
-    background: #FFFFFF !important;
+    background: var(--white) !important;
     color: var(--dark) !important;
     border: 1px solid #C9D5C9 !important;
     border-radius: 12px !important;
@@ -338,6 +341,8 @@ div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
     color: #829087 !important;
 }
 
+/* CHECKBOX */
+
 .stCheckbox label p {
     color: var(--dark) !important;
 }
@@ -345,7 +350,7 @@ div[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
 /* CONTAINERS */
 
 div[data-testid="stVerticalBlockBorderWrapper"] {
-    background: #FFFFFF;
+    background: var(--white);
     border: 1px solid var(--border) !important;
     border-radius: 18px !important;
 }
@@ -353,7 +358,7 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
 /* METRICS */
 
 div[data-testid="stMetric"] {
-    background: #FFFFFF;
+    background: var(--white);
     padding: 13px;
     border: 1px solid var(--border);
     border-radius: 15px;
@@ -374,12 +379,6 @@ div[data-testid="stCaptionContainer"] p {
     font-size: 12px;
 }
 
-/* ALERTS */
-
-div[data-testid="stAlert"] {
-    border-radius: 14px;
-}
-
 /* FOOTER */
 
 .footer {
@@ -393,12 +392,17 @@ div[data-testid="stAlert"] {
 /* MOBILE */
 
 @media (max-width: 600px) {
+
     .block-container {
         padding: 0.6rem 0.85rem 2.5rem;
     }
 
     .brand-name {
         font-size: 25px;
+    }
+
+    .brand-sub {
+        font-size: 10px;
     }
 
     .hero {
@@ -419,12 +423,16 @@ div[data-testid="stAlert"] {
         font-size: 21px;
     }
 
+    div[data-testid="stRadio"] {
+        padding: 10px 0 !important;
+    }
+
     div[data-testid="stRadio"] > div {
-        gap: 5px;
+        gap: 5px !important;
     }
 
     div[data-testid="stRadio"] label {
-        padding: 9px 5px !important;
+        padding: 10px 3px !important;
         border-radius: 10px !important;
     }
 
@@ -455,7 +463,7 @@ div[data-testid="stAlert"] {
 
 
 # ==================================================
-# DATA
+# COMMUNITY DATA
 # ==================================================
 
 communities = {
@@ -469,6 +477,7 @@ communities = {
             "يوغا وتأمل"
         ]
     },
+
     "الفنون": {
         "icon": "🎨",
         "description": "مجتمع يجمع محبي الفن والتجارب الإبداعية.",
@@ -479,6 +488,7 @@ communities = {
             "ورشة ألوان مائية"
         ]
     },
+
     "الفخار": {
         "icon": "🏺",
         "description": "اكتشف متعة صناعة الأشياء بيديك.",
@@ -489,6 +499,7 @@ communities = {
             "Pottery & Coffee"
         ]
     },
+
     "الخيول": {
         "icon": "🐎",
         "description": "مجتمع لمحبي الخيل والتجارب الخارجية.",
@@ -499,6 +510,7 @@ communities = {
             "تجربة ركوب"
         ]
     },
+
     "الورش": {
         "icon": "🛠️",
         "description": "نتعلم أشياء جديدة ونتشارك المهارات.",
@@ -510,6 +522,11 @@ communities = {
         ]
     }
 }
+
+
+# ==================================================
+# EVENTS
+# ==================================================
 
 events = [
     {
@@ -543,27 +560,22 @@ events = [
 # SESSION STATE
 # ==================================================
 
-if "page" not in st.session_state:
-    st.session_state.page = "الرئيسية"
+defaults = {
+    "page": "الرئيسية",
+    "community": "اليوغا",
+    "ideas": [],
+    "votes": {},
+    "interests": [],
+    "messages": {}
+}
 
-if "community" not in st.session_state:
-    st.session_state.community = "اليوغا"
-
-if "ideas" not in st.session_state:
-    st.session_state.ideas = []
-
-if "votes" not in st.session_state:
-    st.session_state.votes = {}
-
-if "interests" not in st.session_state:
-    st.session_state.interests = []
-
-if "accepted" not in st.session_state:
-    st.session_state.accepted = False
+for key, value in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
 
 
 # ==================================================
-# HEADER
+# BRAND HEADER
 # ==================================================
 
 st.markdown("""
@@ -575,6 +587,11 @@ st.markdown("""
     <div class="brand-icon">🌿</div>
 </div>
 """, unsafe_allow_html=True)
+
+
+# ==================================================
+# NAVIGATION
+# ==================================================
 
 pages = ["الرئيسية", "المجتمعات", "تذاكري", "حسابي"]
 
@@ -691,7 +708,7 @@ if st.session_state.page == "الرئيسية":
             st.markdown(f"### {event['name']}")
 
             st.caption(
-                f"{event['type']}  ·  {event['date']}  ·  {event['place']}"
+                f"{event['type']} · {event['date']} · {event['place']}"
             )
 
             st.write(
@@ -708,10 +725,7 @@ if st.session_state.page == "الرئيسية":
                 st.session_state.page = "المجتمعات"
                 st.rerun()
 
-    if st.button(
-        "اكتشف جميع المجتمعات ←",
-        use_container_width=True
-    ):
+    if st.button("اكتشف جميع المجتمعات ←", use_container_width=True):
         st.session_state.page = "المجتمعات"
         st.rerun()
 
@@ -737,9 +751,7 @@ elif st.session_state.page == "المجتمعات":
 
         with st.container(border=True):
 
-            st.markdown(
-                f"### {data['icon']} {name}"
-            )
+            st.markdown(f"### {data['icon']} {name}")
 
             st.caption(data["description"])
 
@@ -765,14 +777,11 @@ elif st.session_state.page == "المجتمعات":
         "مساحة المجتمع"
     ])
 
-    # ----------------------------------------------
     # OVERVIEW
-    # ----------------------------------------------
 
     with tab1:
 
         st.subheader("عن المجتمع")
-
         st.write(data["description"])
 
         st.markdown("### من تجاربنا السابقة")
@@ -799,15 +808,10 @@ elif st.session_state.page == "المجتمعات":
 
         st.markdown("### What to Bring 🎒")
 
-        st.caption(
-            f"الأشياء المقترحة لمجتمع {name}"
-        )
+        st.caption(f"الأشياء المقترحة لمجتمع {name}")
 
         for item in data["bring"]:
-            st.checkbox(
-                item,
-                key=f"bring_{name}_{item}"
-            )
+            st.checkbox(item, key=f"bring_{name}_{item}")
 
         st.divider()
 
@@ -822,9 +826,7 @@ elif st.session_state.page == "المجتمعات":
 
             st.success("تم تسجيل اهتمامك بنجاح! 🌿")
 
-    # ----------------------------------------------
     # IDEA LAB
-    # ----------------------------------------------
 
     with tab2:
 
@@ -871,15 +873,12 @@ elif st.session_state.page == "المجتمعات":
 
                 st.caption(f"الأصوات: {votes}")
 
-                if st.button(
-                    "👍 صوّت",
-                    key=f"vote_{key}"
-                ):
+                if st.button("👍 صوّت", key=f"vote_{key}"):
 
                     st.session_state.votes[key] = votes + 1
                     st.rerun()
 
-        for i, idea in enumerate(st.session_state.ideas):
+        for idea in st.session_state.ideas:
 
             if idea["community"] == name:
 
@@ -898,25 +897,18 @@ elif st.session_state.page == "المجتمعات":
             "ابحث عن شريك لتنظيم الفكرة",
             use_container_width=True
         ):
-            st.info(
-                "سيتم تطوير نظام البحث عن Co-host لاحقاً."
-            )
+            st.info("سيتم تطوير نظام البحث عن Co-host لاحقاً.")
 
-    # ----------------------------------------------
     # COMMUNITY SPACE
-    # ----------------------------------------------
 
     with tab3:
 
         st.subheader("Community Space 🔒")
 
-        st.write(
-            "مساحة خاصة للتواصل بين أعضاء المجتمع."
-        )
+        st.write("مساحة خاصة للتواصل بين أعضاء المجتمع.")
 
         accepted = st.toggle(
             "محاكاة: تم قبول تسجيلي في المجتمع",
-            value=st.session_state.accepted,
             key=f"accepted_{name}"
         )
 
@@ -928,16 +920,24 @@ elif st.session_state.page == "المجتمعات":
 
             message = st.text_area(
                 "اكتب رسالتك",
-                placeholder="شاركنا أفكارك..."
+                placeholder="شاركنا أفكارك...",
+                key=f"message_{name}"
             )
 
             if st.button(
                 "إرسال الرسالة",
+                key=f"send_{name}",
                 use_container_width=True
             ):
 
                 if message.strip():
+
+                    st.session_state.messages.setdefault(name, [])
+                    st.session_state.messages[name].append(message)
                     st.success("تم إرسال الرسالة التجريبية.")
+
+            for msg in st.session_state.messages.get(name, []):
+                st.info(msg)
 
             st.divider()
 
@@ -968,7 +968,6 @@ elif st.session_state.page == "تذاكري":
     qr = qrcode.make("JAZIF-DEMO-MEMBER-001")
 
     buffer = BytesIO()
-
     qr.save(buffer, format="PNG")
 
     with st.container(border=True):
@@ -984,10 +983,7 @@ elif st.session_state.page == "تذاكري":
             unsafe_allow_html=True
         )
 
-        st.image(
-            buffer.getvalue(),
-            width=190
-        )
+        st.image(buffer.getvalue(), width=190)
 
         st.markdown(
             "<h3 style='text-align:center;color:#263D32'>"
@@ -1019,9 +1015,7 @@ elif st.session_state.page == "حسابي":
     with st.container(border=True):
 
         st.markdown("## 👩🏻")
-
         st.subheader("Noura Member")
-
         st.caption("Jazif Community Member")
 
         st.markdown(
@@ -1055,7 +1049,6 @@ elif st.session_state.page == "حسابي":
         "🎟️ عرض التذاكر الرقمية",
         use_container_width=True
     ):
-
         st.session_state.page = "تذاكري"
         st.rerun()
 
@@ -1063,7 +1056,6 @@ elif st.session_state.page == "حسابي":
         "🌿 تصفح المجتمعات",
         use_container_width=True
     ):
-
         st.session_state.page = "المجتمعات"
         st.rerun()
 
