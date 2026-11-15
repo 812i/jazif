@@ -540,10 +540,7 @@ if st.session_state.page == "الرئيسية":
         unsafe_allow_html=True,
     )
 
-    a, b, c = st.columns(3)
-    a.metric("المجتمعات", "05")
-    b.metric("المساحة الداخلية", "105 m²")
-    c.metric("الحديقة الخارجية", "533 m²")
+    
 
     st.markdown('<div class="section-title">تجارب ومساحات جازف</div>', unsafe_allow_html=True)
 
