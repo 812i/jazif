@@ -1,213 +1,623 @@
 import streamlit as st
-from pathlib import Path
-import base64, html
+import folium
+from streamlit_folium import st_folium
 
-st.set_page_config(page_title="JAZIF | Creative Space", page_icon="✦", layout="wide", initial_sidebar_state="collapsed")
-ROOT = Path(__file__).parent
-ASSETS = ROOT / "assets"
+# =====================================================
+# JAZIF MAP | KING SALMAN PARK
+# =====================================================
 
-def b64(name):
-    p = ASSETS / name
-    return base64.b64encode(p.read_bytes()).decode() if p.exists() else ""
+st.set_page_config(
+    page_title="JAZIF MAP",
+    page_icon="🌿",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
-HERO1 = b64("jazif_hero_1.jpeg")
-HERO2 = b64("jazif_hero_2.jpeg")
+# -------------------- COLORS -------------------------
 
-COMMUNITIES = [
-    {"key":"draw","name":"مجتمع الفن والفخار","en":"DRAW","desc":"مساحة للرسم والفخار والتجريب الفني، مهما كان مستواك.","members":94,"emoji":"🎨","img":"https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1800&q=90"},
-    {"key":"walk","name":"مجتمع المشي","en":"WALK","desc":"نكتشف المدينة وتفاصيلها الصغيرة خطوة بخطوة.","members":68,"emoji":"🚶","img":"https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1800&q=90"},
-    {"key":"bikes","name":"مجتمع الدراجات","en":"BIKES","desc":"جولات بالدراجات، حركة، وهواء جديد ووجوه جديدة.","members":52,"emoji":"🚲","img":"https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=1800&q=90"},
-    {"key":"music","name":"مجتمع الموسيقى","en":"MUSIC","desc":"نجتمع حول الموسيقى؛ نسمع، نشارك، ونجرب أصواتاً وأفكاراً جديدة.","members":124,"emoji":"🎙️","img":"https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1800&q=90"},
-    {"key":"yoga","name":"مجتمع اليوغا","en":"YOGA","desc":"وقت للحركة الهادئة والتنفس والتواصل مع الجسد.","members":43,"emoji":"🧘","img":"https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1800&q=90"},
+DARK = "#263D32"
+GREEN = "#496653"
+SOFT = "#E7EDE5"
+BG = "#F7F7F2"
+WHITE = "#FFFFFF"
+MUTED = "#66766A"
+BORDER = "#E2E8DF"
+
+# -------------------- PLACES -------------------------
+
+PLACES = [
+    {
+        "id": "visitor",
+        "name": "جناح الزوار",
+        "english": "Visitor Pavilion",
+        "category": "مرافق وخدمات",
+        "icon": "🏛️",
+        "description": "جناح الزوار، ويضم مرافق استقبال ومعارض ومساحات للفعاليات.",
+        "lat": 24.7143,
+        "lon": 46.71166,
+        "verified": True,
+        "source": "OpenStreetMap data via Mapcarta",
+    },
+    {
+        "id": "royal",
+        "name": "المجمع الملكي للفنون",
+        "english": "Royal Arts Complex",
+        "category": "ثقافة وفنون",
+        "icon": "🎨",
+        "description": "وجهة ثقافية وفنية تضم مجموعة من المرافق الفنية والثقافية.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "King Salman Park Foundation",
+    },
+    {
+        "id": "museum",
+        "name": "متحف الثقافات العالمية",
+        "english": "Museum of World Cultures",
+        "category": "ثقافة وفنون",
+        "icon": "🏺",
+        "description": "متحف ضمن المجمع الملكي للفنون، مخصص للتعرف على ثقافات العالم.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "Saudi Vision 2030",
+    },
+    {
+        "id": "cinema",
+        "name": "السينما الخارجية",
+        "english": "Outdoor Cinema",
+        "category": "ترفيه",
+        "icon": "🎬",
+        "description": "مساحة سينمائية خارجية ضمن وجهات الحديقة.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "King Salman Park Foundation",
+    },
+    {
+        "id": "amphi",
+        "name": "المسرح المكشوف",
+        "english": "Amphitheater",
+        "category": "ترفيه",
+        "icon": "🎭",
+        "description": "مسرح خارجي للعروض والفعاليات.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "King Salman Park Foundation",
+    },
+    {
+        "id": "artpark",
+        "name": "حديقة الفنون",
+        "english": "Art Park",
+        "category": "طبيعة وحدائق",
+        "icon": "🌳",
+        "description": "مساحة تجمع الفن والطبيعة والتجارب الخارجية.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "King Salman Park Foundation",
+    },
+    {
+        "id": "loop",
+        "name": "مسار المشاة",
+        "english": "Walking Trails",
+        "category": "رياضة ومشي",
+        "icon": "🚶",
+        "description": "مسارات للمشي والحركة والاستمتاع بالمساحات الخضراء.",
+        "lat": None,
+        "lon": None,
+        "verified": False,
+        "source": "King Salman Park Foundation",
+    },
 ]
 
-if "page" not in st.session_state: st.session_state.page = "home"
-if "community" not in st.session_state: st.session_state.community = "music"
-if "ideas" not in st.session_state:
-    st.session_state.ideas = {
-        "music":[
-            {"title":"معرض مصغر لأعمال أعضاء المجتمع في حديقة جازف","by":"لمي الدوسري","detail":"مساحة نعرض فيها أعمال ومواهب أعضاء المجتمع، مع موسيقى وأجواء مفتوحة.","love":31,"support":20,"hosts":0},
-            {"title":"جلسة رسم على الفخار مع موسيقى هادئة","by":"عضو من المجتمع","detail":"تجربة تجمع الفن والموسيقى في لقاء واحد.","love":18,"support":14,"hosts":0}
-        ]
+CATEGORIES = [
+    "الكل",
+    "ثقافة وفنون",
+    "طبيعة وحدائق",
+    "ترفيه",
+    "رياضة ومشي",
+    "مرافق وخدمات",
+]
+
+# -------------------- CSS -----------------------------
+
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"], button, input {
+        font-family: 'IBM Plex Sans Arabic', sans-serif !important;
     }
-if "my_votes" not in st.session_state: st.session_state.my_votes = set()
-if "proposals" not in st.session_state: st.session_state.proposals = []
-if "interest" not in st.session_state: st.session_state.interest = set()
-if "active_tab" not in st.session_state: st.session_state.active_tab = "ideas"
 
-def go(page, key=None):
-    st.session_state.page = page
-    if key: st.session_state.community = key
-    st.rerun()
+    .stApp {
+        background: #F7F7F2;
+        color: #263D32;
+    }
 
-def img_div(url, cls="photo"):
-    return f'<div class="{cls}" style="background-image:linear-gradient(0deg,rgba(0,0,0,.62),rgba(0,0,0,.03)),url(&quot;{url}&quot;)"></div>'
+    header[data-testid="stHeader"] {
+        background: transparent;
+    }
 
-st.markdown(f"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap');
-:root{{--bg:#101513;--panel:#18231f;--line:rgba(255,255,255,.16);--mint:#14b894;--mint2:#76e4c4;--cream:#f5f1e8}}
-html,body,[class*="css"]{{font-family:'DM Sans','IBM Plex Sans Arabic',sans-serif}}
-.stApp{{background:var(--bg);color:var(--cream)}}
-.block-container{{max-width:1500px;padding:0 4vw 5rem}}
-header[data-testid="stHeader"]{{background:transparent;height:0}}
-footer{{visibility:hidden}} #MainMenu{{visibility:hidden}}
-/* Fixed navigation: stays visible while scrolling */
-.st-key-topnav{{position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(12,17,15,.91);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);padding:12px 4vw 9px}}
-.st-key-topnav [data-testid="stHorizontalBlock"]{{align-items:center;gap:8px}}
-.st-key-topnav .stButton>button{{border:0;background:transparent;color:#f5f1e8;font-size:14px;padding:8px 5px;white-space:nowrap;min-height:38px}}
-.st-key-topnav .stButton>button:hover{{color:var(--mint2);background:transparent}}
-.nav-spacer{{height:68px}}
-.brand{{font-size:24px;font-weight:800;letter-spacing:2px;line-height:1}}
-.brand small{{display:block;font-size:8px;letter-spacing:3px;color:#aaa;margin-top:4px}}
-.eyebrow{{font-size:10px;letter-spacing:4px;color:#b5b7ad;text-transform:uppercase}}
-.hero{{height:calc(100svh - 72px);min-height:570px;max-height:920px;position:relative;overflow:hidden;border-radius:3px;background-image:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,.04)),url(data:image/jpeg;base64,{HERO1});background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:clamp(25px,6vw,85px);margin-top:6px}}
-.hero:before{{content:"";position:absolute;inset:0;background-image:linear-gradient(0deg,rgba(0,0,0,.68),rgba(0,0,0,.03)),url(data:image/jpeg;base64,{HERO2});background-size:cover;background-position:center;opacity:0;animation:heroShift 13s infinite}}
-@keyframes heroShift{{0%,43%{{opacity:0}}50%,91%{{opacity:1}}100%{{opacity:0}}}}
-.hero-copy{{position:relative;z-index:2;max-width:850px}}
-.hero h1{{font-size:clamp(48px,8vw,112px);line-height:.9;letter-spacing:-4px;margin:20px 0;color:white;font-weight:800}}
-.hero .arabic{{font-family:'IBM Plex Sans Arabic';font-size:clamp(19px,2vw,27px);letter-spacing:0}}
-.hero-tag{{display:inline-block;border:1px solid rgba(255,255,255,.55);padding:9px 14px;border-radius:30px;font-size:10px;letter-spacing:3px;margin-top:18px}}
-.section-kicker{{font-size:10px;letter-spacing:4px;color:var(--mint2);margin-bottom:7px}}
-.section-title{{font-size:clamp(34px,5vw,64px);font-weight:800;letter-spacing:-2px;margin:0 0 8px;color:var(--cream)}}
-.sub{{color:#b9c0b9;line-height:1.9;font-size:14px}}
-.rule{{height:1px;background:var(--line);margin:38px 0}}
-.photo{{height:270px;background-size:cover;background-position:center;border-radius:4px}}
-.community-name{{font-size:24px;font-weight:800;margin:14px 0 4px}}
-.pill{{display:inline-block;border:1px solid rgba(255,255,255,.3);border-radius:30px;padding:7px 12px;font-size:11px;letter-spacing:1px}}
-.community-hero{{height:430px;background-size:cover;background-position:center;border-radius:4px;display:flex;flex-direction:column;justify-content:flex-end;padding:30px;margin:5px 0 0}}
-.community-hero h1{{font-size:clamp(35px,6vw,70px);font-weight:800;margin:12px 0}}
-.member-pill{{background:#0eaa7d;color:white;border-radius:30px;padding:10px 16px;font-weight:800;width:max-content}}
-.joinbutton{{background:var(--mint);color:#06231c;border-radius:30px;padding:13px 20px;font-weight:800;display:inline-block;margin-top:16px}}
-.idea-box{{background:#102b28;border:1px solid rgba(118,228,196,.25);padding:22px;border-radius:24px;margin:16px 0}}
-.idea-title{{font-size:23px;font-weight:800;line-height:1.5;margin:10px 0}}
-.idea-meta{{color:var(--mint2);font-size:14px;font-weight:700}}
-.vote-row{{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}}
-.vote-love{{background:#3a252c;border:1px solid #a54a62;color:#ffd5df;border-radius:28px;padding:10px 16px;font-weight:800}}
-.vote-support{{background:#0d3443;border:1px solid #167a9c;color:#bdeaff;border-radius:28px;padding:10px 16px;font-weight:800}}
-.vote-host{{background:#0eb78d;border:1px solid #0eb78d;color:#042a22;border-radius:28px;padding:10px 16px;font-weight:800}}
-.footer{{border-top:1px solid var(--line);padding:30px 0;margin-top:60px;color:#929b93;font-size:10px;letter-spacing:3px}}
-.stButton>button{{border:1px solid var(--mint);background:var(--mint);color:#06231c;border-radius:30px;font-weight:800;min-height:43px}}
-.stButton>button:hover{{background:#72e2c2;border-color:#72e2c2;color:#06231c}}
-.stTextInput input,.stTextArea textarea{{background:#132823;color:#fff;border:1px solid #176b63;border-radius:16px}}
-label{{color:#e9eee9!important}}
-@media(max-width:700px){{.block-container{{padding:0 4vw 3rem}}.st-key-topnav{{padding:8px 3vw}}.st-key-topnav .stButton>button{{font-size:11px;padding:6px 1px}}.nav-spacer{{height:58px}}.hero{{height:calc(90svh - 60px);min-height:530px;padding:25px 20px}}.hero h1{{letter-spacing:-2px}}.photo{{height:190px}}.community-hero{{height:380px;padding:20px}}.idea-box{{padding:17px}}}}
-</style>
-""", unsafe_allow_html=True)
+    #MainMenu, footer {
+        visibility: hidden;
+    }
 
-# Persistent top menu
-with st.container(key="topnav"):
-    nav = st.columns([1.15,1,1,1,1])
-    with nav[0]:
-        st.markdown('<div class="brand">جازف<small>JAZIF · CREATIVE SPACE</small></div>',unsafe_allow_html=True)
-    for col,label,page in zip(nav[1:],["الرئيسية","المجتمعات","التجارب","خريطة المساحة"],["home","communities","experiences","map"]):
-        with col:
-            if st.button(label,key="nav_"+page,use_container_width=True): go(page)
-st.markdown('<div class="nav-spacer"></div>',unsafe_allow_html=True)
+    .block-container {
+        max-width: 1150px;
+        padding: 1.2rem 1rem 3rem !important;
+    }
 
-def section(kicker,title,desc=""):
-    st.markdown(f'<div class="section-kicker">{kicker}</div><div class="section-title">{title}</div><p class="sub">{desc}</p>',unsafe_allow_html=True)
+    .map-header {
+        background: #263D32;
+        color: white;
+        border-radius: 22px;
+        padding: 24px 22px;
+        margin-bottom: 20px;
+    }
 
-def cards(items):
-    cols=st.columns(2 if len(items)>1 else 1,gap="large")
-    for i,c in enumerate(items):
-        with cols[i%len(cols)]:
-            st.markdown(img_div(c["img"]),unsafe_allow_html=True)
-            st.markdown(f'<div class="section-kicker" style="margin-top:15px">{c["en"]} COMMUNITY</div><div class="community-name">{c["name"]}</div><p class="sub">{c["desc"]}</p><span class="pill">{c["members"]} MEMBERS {c["emoji"]}</span>',unsafe_allow_html=True)
-            if st.button("EXPLORE COMMUNITY ↗",key="community_"+c["key"],use_container_width=True): go("community",c["key"])
+    .map-header h1 {
+        color: white !important;
+        font-size: 30px;
+        margin: 8px 0;
+    }
 
-page=st.session_state.page
+    .map-header p {
+        color: #E7EDE5 !important;
+        font-size: 14px;
+        margin-bottom: 0;
+    }
 
-if page=="home":
-    st.markdown('<div class="hero"><div class="hero-copy"><div class="eyebrow">A CREATIVE SPACE · RIYADH</div><h1>TAKE THE STEP.<br>BE YOU.</h1><div class="arabic">خُذ الخطوة... كن أنت</div><span class="hero-tag">CREATE · MEET · EXPERIENCE · MOVE</span></div></div>',unsafe_allow_html=True)
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    section("FIND YOUR PEOPLE","المجتمعات","هوايات مختلفة، أشخاص يشبهون فضولك، وتجارب تبدأ بخطوة.")
-    cards(COMMUNITIES[:4])
-    if st.button("SEE ALL COMMUNITIES ↗",use_container_width=True): go("communities")
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    section("YOUR NEXT STEP","مو لازم تعرف كل شيء… بس ابدأ.","جازف مساحة تجرب فيها شيئاً جديداً، وتلتقي بناس يشاركونك الاهتمام.")
-    if st.button("MAKE YOUR OWN COMMUNITY +",use_container_width=True): go("make")
+    .eyebrow {
+        color: #DCE8D9;
+        font-size: 11px;
+        letter-spacing: 2px;
+        font-weight: 600;
+    }
 
-elif page=="communities":
-    section("FIND YOUR COMMUNITY","المجتمعات","اختر مجتمعاً، شارك باهتمامك، أو ابدأ مجتمعاً جديداً.")
-    cards(COMMUNITIES)
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    if st.button("MAKE YOUR OWN COMMUNITY +",use_container_width=True): go("make")
+    .section-heading {
+        color: #263D32;
+        font-size: 21px;
+        font-weight: 700;
+        margin: 22px 0 10px;
+    }
 
-elif page=="community":
-    c=next((x for x in COMMUNITIES if x["key"]==st.session_state.community),COMMUNITIES[0])
-    st.markdown(f'<div class="community-hero" style="background-image:linear-gradient(0deg,rgba(0,0,0,.86),rgba(0,0,0,.08)),url(&quot;{c["img"]}&quot;)"><span class="member-pill">{c["members"]} عضو نشط {c["emoji"]}</span><h1>{c["name"]}</h1><div>{c["desc"]}</div></div>',unsafe_allow_html=True)
-    if st.button("+ طلب اهتمام / انضمام للمجتمع",use_container_width=True):
-        st.session_state.interest.add(c["key"])
-        st.success("وصلنا اهتمامك! بنعلن لك عن الخطوات القادمة.")
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    tabs=st.columns(3)
-    tab_names=[("events","الفعاليات القادمة"),("ideas","💡 اقترح فكرة والتصويت (Co-Host)"),("chat","💬 شات المجتمع")]
-    for col,(key,label) in zip(tabs,tab_names):
-        with col:
-            if st.button(label,key="tab_"+key,use_container_width=True):
-                st.session_state.active_tab=key
+    .place-icon {
+        font-size: 25px;
+    }
+
+    .place-name {
+        color: #263D32;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .place-en {
+        color: #66766A;
+        font-size: 12px;
+    }
+
+    .place-desc {
+        color: #66766A;
+        font-size: 13px;
+        line-height: 1.8;
+        margin-top: 7px;
+    }
+
+    .status {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        background: #E7EDE5;
+        color: #263D32;
+        font-size: 11px;
+        margin-top: 8px;
+    }
+
+    .status-pending {
+        background: #F2EFE4;
+        color: #786B42;
+    }
+
+    .stButton button {
+        background: #263D32 !important;
+        color: white !important;
+        border: 1px solid #263D32 !important;
+        border-radius: 12px !important;
+        min-height: 42px;
+        font-weight: 600;
+    }
+
+    .stButton button p {
+        color: white !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] > div {
+        background: white;
+        border-radius: 12px;
+        border-color: #E2E8DF;
+    }
+
+    .map-note {
+        background: #E7EDE5;
+        border-radius: 13px;
+        padding: 12px 14px;
+        color: #263D32;
+        font-size: 12px;
+        line-height: 1.8;
+        margin: 12px 0;
+    }
+
+    .footer {
+        color: #66766A;
+        text-align: center;
+        font-size: 12px;
+        padding: 28px 5px;
+    }
+
+    @media(max-width: 600px) {
+        .block-container {
+            padding: 0.7rem 0.7rem 2rem !important;
+        }
+
+        .map-header {
+            padding: 21px 17px;
+            border-radius: 18px;
+        }
+
+        .map-header h1 {
+            font-size: 25px;
+        }
+
+        .section-heading {
+            font-size: 19px;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# -------------------- SESSION STATE ------------------
+
+if "selected_place" not in st.session_state:
+    st.session_state.selected_place = "visitor"
+
+if "saved_places" not in st.session_state:
+    st.session_state.saved_places = []
+
+# -------------------- HEADER --------------------------
+
+st.markdown(
+    """
+    <div class="map-header">
+        <div class="eyebrow">JAZIF PRESENTS</div>
+        <h1>JAZIF MAP 🌿</h1>
+        <p>اكتشف حديقة الملك سلمان، مكاناً بعد مكان.</p>
+        <p>Explore · Discover · Connect</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# -------------------- FILTERS -------------------------
+
+st.markdown(
+    '<div class="section-heading">استكشف الخريطة</div>',
+    unsafe_allow_html=True,
+)
+
+filter_col, info_col = st.columns([2, 1])
+
+with filter_col:
+    selected_category = st.selectbox(
+        "اختر نوع المكان",
+        CATEGORIES,
+        index=0,
+    )
+
+with info_col:
+    display_mode = st.selectbox(
+        "طريقة العرض",
+        ["الخريطة", "قائمة الأماكن"],
+        key="display_mode",
+    )
+
+filtered_places = [
+    place for place in PLACES
+    if selected_category == "الكل"
+    or place["category"] == selected_category
+]
+
+# -------------------- MAP -----------------------------
+
+if display_mode == "الخريطة":
+
+    st.markdown(
+        '<div class="section-heading">خريطة حديقة الملك سلمان</div>',
+        unsafe_allow_html=True,
+    )
+
+    # المواقع التي نملك إحداثيات لها فقط
+    mapped_places = [
+        place for place in filtered_places
+        if place["lat"] is not None
+        and place["lon"] is not None
+    ]
+
+    # مركز الخريطة
+    visitor = next(
+        p for p in PLACES
+        if p["id"] == "visitor"
+    )
+
+    park_map = folium.Map(
+        location=[visitor["lat"], visitor["lon"]],
+        zoom_start=15,
+        tiles="OpenStreetMap",
+        control_scale=True,
+    )
+
+    # إضافة العلامات
+    for place in mapped_places:
+
+        popup_html = f"""
+        <div style="
+            font-family:Arial;
+            min-width:150px;
+            text-align:center;
+            padding:8px;
+        ">
+            <div style="font-size:24px;">
+                {place['icon']}
+            </div>
+            <b>{place['name']}</b>
+            <br>
+            <span>{place['english']}</span>
+            <br>
+            <small>{place['category']}</small>
+        </div>
+        """
+
+        folium.Marker(
+            location=[place["lat"], place["lon"]],
+            tooltip=place["name"],
+            popup=folium.Popup(
+                popup_html,
+                max_width=230,
+            ),
+            icon=folium.Icon(
+                color="green",
+                icon="info-sign",
+            ),
+        ).add_to(park_map)
+
+    # عرض الخريطة واستقبال الضغط على العلامات
+    map_result = st_folium(
+        park_map,
+        use_container_width=True,
+        height=440,
+        returned_objects=[
+            "last_object_clicked",
+            "last_object_clicked_tooltip",
+        ],
+        key="jazif_interactive_map",
+    )
+
+    # عند الضغط على Pin: تحديد المكان المختار
+    if map_result:
+
+        clicked_name = map_result.get(
+            "last_object_clicked_tooltip"
+        )
+
+        if clicked_name:
+            clicked_place = next(
+                (
+                    p for p in PLACES
+                    if p["name"] == clicked_name
+                ),
+                None,
+            )
+
+            if clicked_place:
+                st.session_state.selected_place = (
+                    clicked_place["id"]
+                )
+
+        # طريقة احتياطية تعتمد على إحداثيات الضغط
+        clicked_coordinates = map_result.get(
+            "last_object_clicked"
+        )
+
+        if clicked_coordinates and not clicked_name:
+
+            click_lat = clicked_coordinates.get("lat")
+            click_lon = clicked_coordinates.get("lng")
+
+            if click_lat is not None and click_lon is not None:
+
+                for place in mapped_places:
+
+                    if (
+                        abs(place["lat"] - click_lat) < 0.00015
+                        and abs(place["lon"] - click_lon) < 0.00015
+                    ):
+                        st.session_state.selected_place = (
+                            place["id"]
+                        )
+                        break
+
+    st.markdown(
+        """
+        <div class="map-note">
+            📍 اضغط على العلامة الخضراء لعرض تفاصيل المكان.
+            ستتم إضافة بقية المواقع بعد التحقق من إحداثياتها.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# -------------------- PLACE LIST ---------------------
+
+st.markdown(
+    '<div class="section-heading">وجهات الحديقة</div>',
+    unsafe_allow_html=True,
+)
+
+for place in filtered_places:
+
+    with st.container(border=True):
+
+        col1, col2 = st.columns([4, 1])
+
+        with col1:
+
+            st.markdown(
+                f"""
+                <div class="place-icon">{place['icon']}</div>
+                <div class="place-name">{place['name']}</div>
+                <div class="place-en">{place['english']}</div>
+                <div class="place-desc">{place['description']}</div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            if place["verified"]:
+                st.markdown(
+                    '<span class="status">📍 موقع منشور</span>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<span class="status status-pending">'
+                    'الموقع الدقيق قيد التحقق'
+                    '</span>',
+                    unsafe_allow_html=True,
+                )
+
+        with col2:
+
+            if st.button(
+                "التفاصيل",
+                key=f"details_{place['id']}",
+                use_container_width=True,
+            ):
+                st.session_state.selected_place = place["id"]
                 st.rerun()
-    active=st.session_state.active_tab
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    if active=="events":
-        section("UP NEXT","الفعاليات القادمة","لقاءات وتجارب قريبة لهذا المجتمع.")
-        for title,desc in [("Community Meetup","لقاء تعارف وتجربة مفتوحة لجميع المستويات."),("Try Something New","تجربة بسيطة نبدأها مع بعض.")]:
-            st.markdown(f'<div class="idea-box"><div class="section-kicker">COMING SOON · RIYADH</div><div class="idea-title">{title}</div><p class="sub">{desc}</p></div>',unsafe_allow_html=True)
-    elif active=="ideas":
-        section("IDEA LAB","We love it… We support it.","اقترح تجربة أو لقاء لهذا المجتمع. المجتمع يصوّت، والمهتمون يقدرون ينضمون كـ Co-Host.")
-        with st.form("new_idea"):
-            title=st.text_input("اقترح تجربة أو لقاء جديد لهذا المجتمع:",placeholder="مثال: جلسة رسم على الفخار مع موسيقى هادئة")
-            detail=st.text_area("تفاصيل الفكرة (اختياري)",placeholder="احكِ لنا كيف تتخيل التجربة...")
-            submitted=st.form_submit_button("طرح للتصويت ↗")
-        if submitted:
-            if title.strip():
-                st.session_state.ideas.setdefault(c["key"],[]).append({"title":title.strip(),"by":"عضو من المجتمع","detail":detail.strip(),"love":0,"support":0,"hosts":0})
-                st.success("انضافت فكرتك إلى Idea Lab!")
-            else: st.warning("اكتب عنوان الفكرة أولاً.")
-        for i,idea in enumerate(st.session_state.ideas.get(c["key"],[])):
-            st.markdown(f'<div class="idea-box"><div class="idea-meta">💡 مقترح من: {html.escape(idea["by"])}</div><div class="idea-title">{html.escape(idea["title"])}</div><p class="sub">{html.escape(idea["detail"])}</p></div>',unsafe_allow_html=True)
-            cols=st.columns(3)
-            vote_id=f'{c["key"]}_{i}'
-            actions=[("❤️ We Love It", "love", "vote-love"),("🙌 We Support It","support","vote-support"),("🤝 Be a Co-Host","hosts","vote-host")]
-            for col,(label,field,css) in zip(cols,actions):
-                with col:
-                    if st.button(f'{label} ({idea[field]})',key=f'{field}_{vote_id}',use_container_width=True):
-                        unique=f"{field}_{vote_id}"
-                        if unique not in st.session_state.my_votes:
-                            idea[field]+=1
-                            st.session_state.my_votes.add(unique)
-                            st.rerun()
-                        else: st.info("سبق وسجلت اختيارك لهذه الفكرة.")
+
+# -------------------- SELECTED PLACE -----------------
+
+selected = next(
+    (
+        p for p in PLACES
+        if p["id"] == st.session_state.selected_place
+    ),
+    PLACES[0],
+)
+
+st.markdown(
+    '<div class="section-heading">تفاصيل المكان</div>',
+    unsafe_allow_html=True,
+)
+
+with st.container(border=True):
+
+    st.markdown(
+        f"## {selected['icon']} {selected['name']}"
+    )
+
+    st.caption(selected["english"])
+    st.write(selected["description"])
+    st.caption(f"التصنيف: {selected['category']}")
+
+    if selected["verified"]:
+
+        st.success(
+            "تم العثور على إحداثيات منشورة لهذا الموقع."
+        )
+
+        st.code(
+            f"{selected['lat']}, {selected['lon']}",
+            language="text",
+        )
+
+        maps_url = (
+            f"https://www.google.com/maps?q="
+            f"{selected['lat']},{selected['lon']}"
+        )
+
+        st.link_button(
+            "افتح الموقع في Google Maps ↗",
+            maps_url,
+            use_container_width=True,
+        )
+
     else:
-        section("COMMUNITY CHAT","شات المجتمع","مساحة المحادثات والتعارف — نضيف نظام الحسابات والرسائل في مرحلة لاحقة.")
-        st.info("واجهة الشات مبدئية، وتحتاج ربط قاعدة بيانات وتسجيل دخول لتفعيل المحادثات.")
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    if st.button("← العودة للمجتمعات"): go("communities")
 
-elif page=="make":
-    section("START SOMETHING","Make your own community","عندك هواية ودك تجمع الناس حولها؟ اقترح مجتمعك.")
-    with st.form("community_suggestion"):
-        name=st.text_input("اسم المجتمع")
-        desc=st.text_area("فكرة المجتمع")
-        if st.form_submit_button("SEND PROPOSAL ↗"):
-            if name.strip() and desc.strip():
-                st.session_state.proposals.append((name.strip(),desc.strip()))
-                st.success("وصل اقتراحك للمراجعة!")
-            else: st.warning("اكتب اسم المجتمع وفكرته.")
-    for name,desc in st.session_state.proposals:
-        st.markdown(f'<div class="idea-box"><div class="idea-title">{html.escape(name)}</div><p class="sub">{html.escape(desc)}</p><span class="pill">UNDER REVIEW</span></div>',unsafe_allow_html=True)
+        st.warning(
+            "لم نتحقق بعد من الإحداثيات الدقيقة لهذا المعلم. "
+            "لن نضع له Pin حتى نتأكد من موقعه."
+        )
 
-elif page=="experiences":
-    section("MAKE IT HAPPEN","التجارب","فعاليات ولقاءات تفتح لك باب تجربة شيء جديد.")
-    cards(COMMUNITIES[1:4])
-    st.markdown('<div class="rule"></div>',unsafe_allow_html=True)
-    st.info("قريباً: تقويم موحد للفعاليات، تفاصيل كل تجربة، والتسجيل المباشر.")
+    save_label = (
+        "✓ تمت إضافته للمحفوظات"
+        if selected["id"] in st.session_state.saved_places
+        else "♡ احفظ هذا المكان"
+    )
 
-elif page=="map":
-    section("EXPLORE THE SPACE","خريطة جازف","نبدأ برسم مبدئي للمساحة، ونطورها لاحقاً إلى خريطة تفاعلية.")
-    p=ASSETS/"jazif_map_reference.jpeg"
-    if p.exists(): st.image(str(p),use_container_width=True)
-    st.markdown('<div class="idea-box"><div class="idea-title">THE JAZIF MAP</div><p class="sub">مناطق المجتمعات، أماكن الفعاليات، ونقاط التجمع — نحددها في المرحلة القادمة.</p></div>',unsafe_allow_html=True)
+    if st.button(
+        save_label,
+        use_container_width=True,
+    ):
 
-st.markdown('<div class="footer">JAZIF · TAKE THE STEP … BE YOU · RIYADH</div>',unsafe_allow_html=True)
+        if selected["id"] in st.session_state.saved_places:
+            st.session_state.saved_places.remove(
+                selected["id"]
+            )
+        else:
+            st.session_state.saved_places.append(
+                selected["id"]
+            )
+
+        st.rerun()
+
+# -------------------- SAVED PLACES --------------------
+
+st.markdown(
+    '<div class="section-heading">أماكنك المحفوظة ♡</div>',
+    unsafe_allow_html=True,
+)
+
+if st.session_state.saved_places:
+
+    for place_id in st.session_state.saved_places:
+
+        place = next(
+            p for p in PLACES
+            if p["id"] == place_id
+        )
+
+        st.write(
+            f"{place['icon']} {place['name']}"
+        )
+
+else:
+
+    st.caption(
+        "الأماكن التي تحفظها ستظهر هنا."
+    )
+
+# -------------------- FOOTER --------------------------
+
+st.markdown(
+    """
+    <div class="footer">
+        <b>JAZIF MAP 🌿</b><br>
+        Discover your next destination.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
